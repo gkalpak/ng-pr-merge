@@ -20,5 +20,8 @@
   "repository": {
     "type": "git",
     "url": "git+https://bitbucket.org/ExpertSystem_dev/ng-pr-merge.git"
+  },
+  "dependencies": {
+    "chalk": "^1.1.3"
   }
 }
