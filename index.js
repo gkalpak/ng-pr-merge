@@ -31,7 +31,7 @@ _main(process.argv.slice(2));
 function _main(args) {
   let repo;
   let prNo;
-  let pushedChanges = false;
+  let changesPushed = false;
 
   getAndValidateInput(args).
     then(input => ({repo, prNo} = input)).
@@ -42,8 +42,8 @@ function _main(args) {
     then(() => phase4()).
     then(() => phase5()).
     then(() => phase6(prNo)).
-    then(pc => pushedChanges = pc).
-    then(() => theEnd(pushedChanges)).
+    then(cp => changesPushed = cp).
+    then(() => theEnd(changesPushed)).
     catch(exitWithError('ERROR_unexpected'));
 }
 
@@ -73,58 +73,37 @@ function displayHeader(prNo) {
 
 // PHASE 1
 function phase1(prNo) {
-  return new Promise((resolve, reject) => {
-    console.log('\n\nPHASE 1 - Verifying CLA signature...\n');
+  let proceedWithoutCla = 'Failed to verify the CLA signature. Proceed anyway (NOT RECOMMENDED)?';
 
-    let cmds = [
-      `ng-cla-check ${prNo}`
-    ];
-    let proceedWithoutCla = 'Failed to verify the CLA signature. Proceed anyway (NOT RECOMMENDED)?';
-
-    execAsPromised(cmds.join(' && ')).
-      catch(() => askYesOrNoQuestion(proceedWithoutCla)).
-      then(() => console.log('\n  ...done')).
-      then(resolve, reject);
-  }).catch(exitWithError('ERROR_phase1'));
+  return phase(1, 'Verifying CLA signature', () =>
+    execAsPromised(`ng-cla-check ${prNo}`).
+      catch(() => askYesOrNoQuestion(proceedWithoutCla)));
 }
 
 // PHASE 2
 function phase2(repo, prNo) {
-  return new Promise((resolve, reject) => {
-    console.log('\n\nPHASE 2 - Fetching PR as local branch...\n');
+  let cmds = [
+    'git checkout master',
+    'git pull --rebase origin master',
+    `git checkout -b pr-${prNo}`,
+    `curl -L https://github.com/angular/${repo}/pull/${prNo}.patch | git am -3`
+  ];
 
-    let cmds = [
-      'git checkout master',
-      'git pull --rebase origin master',
-      `git checkout -b pr-${prNo}`,
-      `curl -L https://github.com/angular/${repo}/pull/${prNo}.patch | git am -3`
-    ];
-
-    execAsPromised(cmds.join(' && ')).
-      then(() => console.log('\n  ...done')).
-      then(resolve, reject);
-  }).catch(exitWithError('ERROR_phase2'));
+  return phase(2, 'Fetching PR as local branch', () => execAsPromised(cmds.join(' && ')));
 }
 
 // PHASE 3
 function phase3(repo, prNo) {
-  return new Promise((resolve, reject) => {
-    console.log('\n\nPHASE 3 - Merging into master...\n');
+  let cmds = [
+    'git checkout master',
+    `git rebase pr-${prNo}`
+  ];
 
-    let cmds = [
-      'git checkout master',
-      `git rebase pr-${prNo}`,
-      `git checkout -b pr-${prNo}`,
-      `curl -L https://github.com/angular/${repo}/pull/${prNo}.patch | git am -3`
-    ];
-
+  return phase(3, 'Merging into master', () =>
     getCommitCount().
       then(count => { if (count > 1) cmds.push(`git rebase -i HEAD~${count}`); }).
       then(() => execAsPromised(cmds.join(' && '))).
-      then(() => updateCommitMessage(prNo)).
-      then(() => console.log('\n  ...done')).
-      then(resolve, reject);
-  }).catch(exitWithError('ERROR_phase3'));
+      then(() => updateCommitMessage(prNo)));
 
   // Helpers
   function getCommitCount() {
@@ -153,56 +132,39 @@ function phase3(repo, prNo) {
 
 // PHASE 4
 function phase4() {
-  return new Promise((resolve, reject) => {
-    console.log('\n\nPHASE 4 - Inspecting changes...\n');
-
+  return phase(4, 'Inspecting changes', () => {
     console.log('    GIT diff:');
-    execAsPromised('git diff origin/master').
+    return execAsPromised('git diff origin/master').
       catch(noop).
       then(() => console.log('    GIT log:')).
       then(() => execAsPromised('git log')).
-      catch(noop).
-      then(() => console.log('\n  ...done')).
-      then(resolve, reject);
-  }).catch(exitWithError('ERROR_phase4'));
+      catch(noop);
+  });
 }
 
 // PHASE 5
 function phase5() {
-  return new Promise((resolve, reject) => {
-    console.log('\n\nPHASE 5 - Running the CI-checks...\n');
-
+  return phase(5, 'Running the CI-checks', () =>
     askYesOrNoQuestion('Do you want to run the CI-checks now (RECOMMENDED)?', true).
-      then(() => console.log('   Initializing the CI-checks...')).
-      then(() => execAsPromised('grunt ci-checks')).
-      then(() => console.log('\n  ...done')).
-      then(resolve, reject);
-  }).catch(exitWithError('ERROR_phase5'));
+      then(() => {
+        console.log('   Initializing the CI-checks...');
+        return execAsPromised('grunt ci-checks');
+      }, noop));
 }
 
 // PHASE 6
 function phase6(prNo) {
-  return new Promise((resolve, reject) => {
-    console.log('\n\nPHASE 6 - Cleaning up and Pushing to origin...\n');
-
-    let pushedChanges = false;
-
+  return phase(6, 'Cleaning up and Pushing to origin', () =>
     execAsPromised(`git branch -D pr-${prNo}`).
       then(() => askYesOrNoQuestion('CAUTION: Do you want to push the changes to origin/master?').
-        then(() => pushedChanges = true).
-        then(() => execAsPromised('git push origin master')).
-        catch(noop)).
-      then(() => console.log('\n  ...done')).
-      then(() => pushedChanges).
-      then(resolve, reject);
-  }).catch(exitWithError('ERROR_phase6'));
+        then(() => execAsPromised('git push origin master').then(() => true),
+             () => false)));
 }
 
 // THE END
-function theEnd(pushedChanges) {
+function theEnd(changesPushed) {
   console.log('\nOPERATION COMPLETED SUCCESSFULLY!');
-
-  if (!pushedChanges) {
+  if (!changesPushed) {
     console.log('(Don\'t forget to manually push the changes.)');
   }
 }
@@ -266,7 +228,9 @@ function exitWithError(errCode) {
   return function onError(err) {
     let errMsg = ERRORS[errCode] || errCode || '<no error code>';
 
-    if (err) console.error(err);
+    if (err) {
+      console.error(err);
+    }
     console.error(`\nERROR: ${errMsg}\n\nOPERATION ABORTED!`);
 
     process.exit(1);
@@ -274,3 +238,14 @@ function exitWithError(errCode) {
 }
 
 function noop() {}
+
+function phase(phaseNo, description, doWork) {
+  console.log(`\n\nPHASE ${phaseNo} - ${description}...\n`);
+
+  return doWork().
+    then(output => {
+      console.log('\n  ...done');
+      return output;
+    }).
+    catch(exitWithError(`ERROR_phase${phaseNo}`));
+}
