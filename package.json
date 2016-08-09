@@ -1,0 +1,23 @@
+{
+  "name": "ng-pr-merge",
+  "version": "0.0.0",
+  "description": "A utility for rebase-merging AngularJS PRs into master.",
+  "keywords": [
+    "Utility",
+    "AngularJS"
+  ],
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "bin": {
+    "ng-pr-merge": "index.js"
+  },
+  "license": "Unlicense",
+  "author": "ExpertSystem <expertsystem.dev@gmail.com>",
+  "homepage": "https://bitbucket.org/ExpertSystem_dev/ng-pr-merge#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://bitbucket.org/ExpertSystem_dev/ng-pr-merge.git"
+  }
+}
