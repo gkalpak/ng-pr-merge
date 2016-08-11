@@ -54,7 +54,7 @@ function displayWarning() {
 }
 
 function getAndValidateInput(args, defaults, utils) {
-  args = minimist(args);
+  args = utils.removeSurroundingQuotes(minimist(args));
 
   if (args.usage) return {usage: true};
 
