@@ -1,6 +1,6 @@
 {
   "name": "ng-pr-merge",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "A utility for rebase-merging AngularJS PRs into master.",
   "keywords": [
     "Utility",
