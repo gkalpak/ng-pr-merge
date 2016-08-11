@@ -6,6 +6,7 @@ let chalk = require('chalk');
 let minimist = require('minimist');
 
 // Imports - Local
+let CleanUper = require('./lib/clean-uper');
 let Config = require('./lib/config');
 let GitUtils = require('./lib/git-utils');
 let Merger = require('./lib/merger');
@@ -17,13 +18,14 @@ _main(process.argv.slice(2));
 // Functions - Definitions
 function _main(args) {
   let config = new Config();
-  let utils = new Utils(config.errorMessages);
+  let cleanUper = new CleanUper();
+  let utils = new Utils(cleanUper, config.messages);
   let input = getAndValidateInput(args, config.defaults, utils);
 
-  if (input.usage) return displayUsage(config);
+  if (input.usage) return displayUsage(config.messages);
 
-  let gUtils = new GitUtils(utils);
-  let merger = new Merger(utils, gUtils, input);
+  let gUtils = new GitUtils(utils, cleanUper);
+  let merger = new Merger(utils, gUtils, cleanUper, input);
 
   displayHeader(input.repo, input.prNo, input.branch);
   merger.merge().then(theEnd).catch(utils.exitWithError('ERROR_unexpected'));
@@ -34,8 +36,8 @@ function displayHeader(repo, prNo, branch) {
   console.log(chalk.blue.bold(`MERGING PR #${prNo} (to '${repo}#${branch}'):`));
 }
 
-function displayUsage(config) {
-  let lines = config.usageMessage.split('\n');
+function displayUsage(messages) {
+  let lines = messages.usage.split('\n');
   let first = lines.shift();
   let rest = lines.join('\n');
 
@@ -59,7 +61,7 @@ function getAndValidateInput(args, defaults, utils) {
   if (args.usage) return {usage: true};
 
   let repo = args.repo || defaults.repo;
-  let prNo = args._[0] || utils.exitWithError('ERROR_missingPrNo')();
+  let prNo = args._[0] || utils.exitWithError('ERROR_missingPrNo', true)();
   let branch = args._[1] || defaults.branch;
 
   return {repo, prNo, branch};
