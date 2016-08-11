@@ -49,7 +49,7 @@ function displayWarning() {
       ':::::::::::::::::::::::::::::::::::::::::::::\n' +
       '::  WARNING:                               ::\n' +
       '::    This is still an experimental tool.  ::\n' +
-      '::    Use with caution and your own risk!  ::\n' +
+      '::    Use at your own risk!                ::\n' +
       ':::::::::::::::::::::::::::::::::::::::::::::\n'));
 }
 
