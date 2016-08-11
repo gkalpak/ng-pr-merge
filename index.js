@@ -7,7 +7,6 @@ let minimist = require('minimist');
 
 // Imports - Local
 let Config = require('./lib/config');
-let pkg = require('./package.json');
 let GitUtils = require('./lib/git-utils');
 let Merger = require('./lib/merger');
 let Utils = require('./lib/utils');
@@ -17,11 +16,13 @@ _main(process.argv.slice(2));
 
 // Functions - Definitions
 function _main(args) {
-  let config = new Config(pkg);
+  let config = new Config();
   let utils = new Utils(config.errorMessages);
-  let gUtils = new GitUtils(utils);
-
   let input = getAndValidateInput(args, config.defaults, utils);
+
+  if (input.usage) return displayUsage(config);
+
+  let gUtils = new GitUtils(utils);
   let merger = new Merger(utils, gUtils, input);
 
   displayHeader(input.repo, input.prNo, input.branch);
@@ -29,19 +30,33 @@ function _main(args) {
 }
 
 function displayHeader(repo, prNo, branch) {
-  console.log(chalk.yellow(
-    '\n' +
-    ':::::::::::::::::::::::::::::::::::::::::::::\n' +
-    '::  WARNING:                               ::\n' +
-    '::    This is still an experimental tool.  ::\n' +
-    '::    Use with caution and your own risk!  ::\n' +
-    ':::::::::::::::::::::::::::::::::::::::::::::\n'));
-
+  displayWarning();
   console.log(chalk.blue.bold(`MERGING PR #${prNo} (to '${repo}#${branch}'):`));
+}
+
+function displayUsage(config) {
+  let lines = config.usageMessage.split('\n');
+  let first = lines.shift();
+  let rest = lines.join('\n');
+
+  displayWarning();
+  console.log(chalk.bgBlack(`${chalk.bold(first)}\n${chalk.gray(rest)}`));
+}
+
+function displayWarning() {
+  console.log(chalk.yellow(
+      '\n' +
+      ':::::::::::::::::::::::::::::::::::::::::::::\n' +
+      '::  WARNING:                               ::\n' +
+      '::    This is still an experimental tool.  ::\n' +
+      '::    Use with caution and your own risk!  ::\n' +
+      ':::::::::::::::::::::::::::::::::::::::::::::\n'));
 }
 
 function getAndValidateInput(args, defaults, utils) {
   args = minimist(args);
+
+  if (args.usage) return {usage: true};
 
   let repo = args.repo || defaults.repo;
   let prNo = args._[0] || utils.exitWithError('ERROR_missingPrNo')();
