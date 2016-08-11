@@ -6,10 +6,10 @@ let chalk = require('chalk');
 let minimist = require('minimist');
 
 // Imports - Local
-let Config = require('./config');
+let Config = require('./lib/config');
 let pkg = require('./package.json');
-let GitUtils = require('./git-utils');
-let Utils = require('./utils');
+let GitUtils = require('./lib/git-utils');
+let Utils = require('./lib/utils');
 
 // Variables - Private
 let config = new Config(pkg);
