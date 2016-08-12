@@ -1,5 +1,5 @@
 {
-  "name": "ng-pr-merge",
+  "name": "@gkalpak/ng-pr-merge",
   "version": "0.0.5",
   "description": "A utility for rebase-merging AngularJS PRs into master.",
   "keywords": [
@@ -15,11 +15,11 @@
     "ng-pr-merge": "index.js"
   },
   "license": "Unlicense",
-  "author": "ExpertSystem <expertsystem.dev@gmail.com>",
-  "homepage": "https://bitbucket.org/ExpertSystem_dev/ng-pr-merge#readme",
+  "author": "gkalpak <kalpakas.g@gmail.com>",
+  "homepage": "https://github.com/gkalpak/ng-pr-merge#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://bitbucket.org/ExpertSystem_dev/ng-pr-merge.git"
+    "url": "git+https://github.com/gkalpak/ng-pr-merge.git"
   },
   "dependencies": {
     "@gkalpak/ng-cla-check": "~0.0.8",
