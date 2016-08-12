@@ -24,8 +24,8 @@ function _main(args) {
 
   if (input.usage) return displayUsage(config.messages);
 
-  let gUtils = new GitUtils(utils, cleanUper);
-  let merger = new Merger(utils, gUtils, cleanUper, input);
+  let gUtils = new GitUtils(cleanUper, utils);
+  let merger = new Merger(cleanUper, utils, gUtils, input);
 
   displayHeader(input.repo, input.prNo, input.branch);
   merger.merge().then(theEnd).catch(utils.exitWithError('ERROR_unexpected'));
