@@ -23,6 +23,7 @@ function _main(args) {
   let input = getAndValidateInput(args, config.defaults, utils);
 
   if (input.usage) return displayUsage(config.messages);
+  if (input.instructions) return displayInstructions(utils, config.messages, input);
 
   let gUtils = new GitUtils(cleanUper, utils);
   let merger = new Merger(cleanUper, utils, gUtils, input);
@@ -34,6 +35,29 @@ function _main(args) {
 function displayHeader(repo, prNo, branch) {
   displayWarning();
   console.log(chalk.blue.bold(`MERGING PR #${prNo} (to '${repo}#${branch}'):`));
+}
+
+function displayInstructions(utils, messages, input) {
+  input.tempBranch = Merger.getTempBranch(input.prNo);
+  input.prUrl = Merger.getPrUrl(input.repo, input.prNo);
+
+  let header = `\nInstructions for merging PR #${input.prNo} to '${input.repo}#${input.branch}':`;
+  console.log(chalk.blue.bold(header));
+
+  let phases = messages.phases;
+  Object.keys(phases).forEach(phaseId => {
+    let phase = phases[phaseId];
+    let description = phase.description;
+    let instructions = phase.instructions.map(task => utils.interpolate(task, input));
+
+    if (!instructions.length) return;
+
+    console.log(chalk.cyan.bold(`\n\n  PHASE ${phaseId} - ${description}\n`));
+    instructions.forEach(task => {
+      task = task.replace(/`([^`]+)`/g, (_, g1) => chalk.bgBlack.green(g1));
+      console.log(`    - ${task}`);
+    });
+  });
 }
 
 function displayUsage(messages) {
@@ -60,9 +84,10 @@ function getAndValidateInput(args, defaults, utils) {
 
   if (args.usage) return {usage: true};
 
+  let instructions = !!args.instructions;
   let repo = args.repo || defaults.repo;
   let prNo = args._[0];
-  let branch = args._[1] || defaults.branch;
+  let branch = args.branch || defaults.branch;
 
   if (repo.indexOf('/') === -1) {
     utils.exitWithError('ERROR_invalidRepo', true)();
@@ -71,7 +96,7 @@ function getAndValidateInput(args, defaults, utils) {
     utils.exitWithError('ERROR_missingPrNo', true)();
   }
 
-  return {repo, prNo, branch};
+  return {instructions, repo, prNo, branch};
 }
 
 function theEnd(changesPushed) {

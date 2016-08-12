@@ -11,7 +11,7 @@ Tasks performed:
 
 1. Verify CLA signature.
 2. Fetch PR as local branch.
-3. Rebase and merge local branch into master.
+3. Rebase and merge local branch into target branch (e.g. `master`).
 4. Add `Closes #<PR>` to the commit message.
 5. Display the resulting changes (via `git diff` and `git log`).
 6. Run the CI-checks.
@@ -35,4 +35,12 @@ You can optionally specify the GitHub repo and/or branch to merge to (by default
 ```shell
 # Use non-default repo and branch
 ng-pr-merge 12345 --branch="some-branch" --repo="some-user/some-repo"
+```
+
+Finally, adding the `--instructions` argument, will display the commands that need to be run to, but
+not actually do anything. This is useful if you want to run the commands yourself:
+
+```shell
+# Only show instructions
+ng-pr-merge 12345 --instructions [--branch="some-branch"] [--repo="some-user/some-repo"]
 ```
