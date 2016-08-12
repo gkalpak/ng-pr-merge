@@ -61,8 +61,15 @@ function getAndValidateInput(args, defaults, utils) {
   if (args.usage) return {usage: true};
 
   let repo = args.repo || defaults.repo;
-  let prNo = args._[0] || utils.exitWithError('ERROR_missingPrNo', true)();
+  let prNo = args._[0];
   let branch = args._[1] || defaults.branch;
+
+  if (repo.indexOf('/') === -1) {
+    utils.exitWithError('ERROR_invalidRepo', true)();
+  }
+  if (!prNo) {
+    utils.exitWithError('ERROR_missingPrNo', true)();
+  }
 
   return {repo, prNo, branch};
 }
