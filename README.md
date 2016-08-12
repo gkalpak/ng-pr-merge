@@ -2,7 +2,7 @@
 
 _Warning:_
 _This is still an experimental tool._
-_Use with caution and your own risk!_
+_Use at your own risk!_
 
 ## Description
 
@@ -15,12 +15,24 @@ Tasks performed:
 4. Add `Closes #<PR>` to the commit message.
 5. Display the resulting changes (via `git diff` and `git log`).
 6. Run the CI-checks.
-7. Clean up and push to origin.
+7. Push to origin.
 
 ## Usage
 
 Using in the command-line:
 
 ```shell
+# Show usage instructions
+ng-pr-merge --usage
+
+# Merge a PR
 ng-pr-merge 12345
+```
+
+You can optionally specify the GitHub repo and/or branch to merge to (by default
+`angular/angular.js` and `master` respectively):
+
+```shell
+# Use non-default repo and branch
+ng-pr-merge 12345 --branch="some-branch" --repo="some-user/some-repo"
 ```
