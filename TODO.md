@@ -1,7 +1,6 @@
 # TODO (or not todo)
 
-- Publish to npm.
-- Depend on `ng-cla-check`.
+- Add publish script (e.g. add git tag).
 - Add tests.
 - Add docs.
 - Profit :)
