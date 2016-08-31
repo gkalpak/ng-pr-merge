@@ -37,7 +37,7 @@ You can optionally specify the GitHub repo and/or branch to merge to (by default
 ng-pr-merge 12345 --branch="some-branch" --repo="some-user/some-repo"
 ```
 
-Finally, adding the `--instructions` argument, will display the commands that need to be run to, but
+Finally, adding the `--instructions` argument, will display the commands that need to be run, but
 not actually do anything. This is useful if you want to run the commands yourself:
 
 ```shell
