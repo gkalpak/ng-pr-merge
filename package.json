@@ -9,6 +9,7 @@
   "main": "lib/merger",
   "scripts": {
     "lint": "eslint .",
+    "prepublish": "npm test",
     "start": "node index",
     "pretest": "npm run lint",
     "test": "npm run test-unit && npm run test-e2e",
