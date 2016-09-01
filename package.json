@@ -8,7 +8,9 @@
   ],
   "main": "lib/merger",
   "scripts": {
+    "lint": "eslint .",
     "start": "node index",
+    "pretest": "npm run lint",
     "test": "npm run test-unit && npm run test-e2e",
     "test-e2e": "node scripts/run-tests --type=e2e",
     "test-unit": "node scripts/run-tests --type=unit",
@@ -30,6 +32,7 @@
     "minimist": "^1.2.0"
   },
   "devDependencies": {
+    "eslint": "^3.4.0",
     "jasmine": "^2.5.0"
   }
 }
