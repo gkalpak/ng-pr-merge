@@ -42,5 +42,5 @@ not actually do anything. This is useful if you want to run the commands yoursel
 
 ```shell
 # Only show instructions
-ng-pr-merge 12345 --instructions [--branch="some-branch"] [--repo="some-user/some-repo"]
+ng-pr-merge 12345 [--branch="some-branch"] [--repo="some-user/some-repo"] --instructions
 ```
