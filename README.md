@@ -1,4 +1,4 @@
-# ng-pr-merge
+# ng-pr-merge [![Build Status][build-status-image]][build-status]
 
 _Warning:_
 _This is still an experimental tool._
@@ -66,3 +66,7 @@ The following test-types/modes are available:
 - **"Watch" mode:** `npm run test-watch`  
   _Watch all files and rerun the unit tests whenever something changes. For performance reasons,
   code-linting or e2e tests are omitted._
+
+
+[build-status]: https://travis-ci.org/gkalpak/ng-pr-merge
+[build-status-image]: https://travis-ci.org/gkalpak/ng-pr-merge.svg?branch=master
