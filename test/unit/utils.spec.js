@@ -564,14 +564,14 @@ describe('Utils', () => {
       let parsedArgs;
 
       utils.spawnAsPromised('foo     "bar" --baz --qux="foo bar" "baz qux"');
-      parsedArgs = ['"bar"', '--baz', '--qux="foo bar"', '"baz qux"'];
+      parsedArgs = ['bar', '--baz', '--qux="foo bar"', 'baz qux'];
 
       expect(childProcess.spawn).toHaveBeenCalledWith('foo', parsedArgs, jasmine.any(Object));
 
       utils.spawnAsPromised('"foo"     "bar" --baz --qux="foo bar" "baz qux"');
-      parsedArgs = ['"bar"', '--baz', '--qux="foo bar"', '"baz qux"'];
+      parsedArgs = ['bar', '--baz', '--qux="foo bar"', 'baz qux'];
 
-      expect(childProcess.spawn).toHaveBeenCalledWith('"foo"', parsedArgs, jasmine.any(Object));
+      expect(childProcess.spawn).toHaveBeenCalledWith('foo', parsedArgs, jasmine.any(Object));
     });
 
     it('should support command "piping" (and spawn a process for each command)', () => {
@@ -582,8 +582,8 @@ describe('Utils', () => {
       expect(childProcess.spawn).toHaveBeenCalledTimes(3);
 
       expect(childProcess.spawn.calls.argsFor(0)).toEqual(['foo', ['bar'], anyObj]);
-      expect(childProcess.spawn.calls.argsFor(1)).toEqual(['bar', ['"baz"'], anyObj]);
-      expect(childProcess.spawn.calls.argsFor(2)).toEqual(['"baz"', ['qux'], anyObj]);
+      expect(childProcess.spawn.calls.argsFor(1)).toEqual(['bar', ['baz'], anyObj]);
+      expect(childProcess.spawn.calls.argsFor(2)).toEqual(['baz', ['qux'], anyObj]);
 
       expect(spawned[0].stdout.pipe.calls.argsFor(0)[0]).toBe(spawned[1].stdin);
       expect(spawned[1].stdout.pipe.calls.argsFor(0)[0]).toBe(spawned[2].stdin);
