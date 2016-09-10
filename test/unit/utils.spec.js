@@ -294,9 +294,9 @@ describe('Utils', () => {
   });
 
   describe('#getRunWithNodeCmd()', () => {
-    it('should start with the `node` executable', () => {
+    it('should start with the `node` executable (wrapped in double quotes)', () => {
       expect(utils.getRunWithNodeCmd('foo')).toMatch(/node/i);
-      expect(utils.getRunWithNodeCmd('foo').indexOf(process.execPath)).toBe(0);
+      expect(utils.getRunWithNodeCmd('foo').indexOf(`"${process.execPath}"`)).toBe(0);
     });
 
     it('should include the script filepath from inside the module\'s `bin/` directory', () => {
