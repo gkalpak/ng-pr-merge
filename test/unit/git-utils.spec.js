@@ -105,10 +105,10 @@ describe('GitUtils', () => {
       expectToReturnPromise('deleteBranch', ['foo']);
     });
 
-    it('should call `git branch --delete [--force] <branch>`', () => {
+    it('should call `git branch --delete/-D <branch>`', () => {
       expectToCall('deleteBranch', ['foo'], 'git branch --delete foo');
       expectToCall('deleteBranch', ['foo', false], 'git branch --delete foo');
-      expectToCall('deleteBranch', ['foo', true], 'git branch --delete --force foo');
+      expectToCall('deleteBranch', ['foo', true], 'git branch -D foo');
     });
   });
 
