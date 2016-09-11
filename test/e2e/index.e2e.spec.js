@@ -6,6 +6,7 @@ let ClaChecker = require('@gkalpak/ng-cla-check');
 
 // Imports - Local
 let Config = require('../../lib/config');
+let Merger = require('../../lib/merger');
 
 // Tests
 describe('index', () => {
@@ -22,6 +23,7 @@ describe('index', () => {
       runWith(['--usage']).
         then(response => {
           expect(response.code).toBe(0);
+          expect(response.stderr).toBe('');
           expect(response.stdout).toContain(config.messages.usage);
         }).
         then(done);
@@ -32,17 +34,16 @@ describe('index', () => {
     it('should display the commands that need to be run', done => {
       runWith(['12345', '--instructions']).
         then(response => {
-          let phases = config.messages.phases;
+          let phases = Merger.getPhases();
 
           expect(response.code).toBe(0);
+          expect(response.stderr).toBe('');
           expect(response.stdout).toContain('Instructions');
           expect(response.stdout).toContain('12345');
 
-          Object.keys(phases).forEach(phaseId => {
-            let phase = phases[phaseId];
-
+          phases.forEach(phase => {
             if (phase.instructions.length) {
-              expect(response.stdout).toContain(`PHASE ${phaseId}`);
+              expect(response.stdout).toContain(`PHASE ${phase.id}`);
               expect(response.stdout).toContain(phase.description);
             }
           });
@@ -54,6 +55,7 @@ describe('index', () => {
       runWith(['12345', '--instructions']).
         then(response => {
           expect(response.code).toBe(0);
+          expect(response.stderr).toBe('');
           expect(response.stdout).toContain(config.defaults.branch);
           expect(response.stdout).toContain(config.defaults.repo);
         }).
@@ -61,9 +63,10 @@ describe('index', () => {
     });
 
     it('should display instructions specific to custom `repo`/`branch` (if specified)', done => {
-      runWith(['12345', '--branch=foo-bar', '--repo=baz/qux', '--instructions']).
+      runWith(['12345', '--branch="foo-bar"', '--repo=baz/qux', '--instructions']).
         then(response => {
           expect(response.code).toBe(0);
+          expect(response.stderr).toBe('');
           expect(response.stdout).not.toContain(config.defaults.branch);
           expect(response.stdout).not.toContain(config.defaults.repo);
           expect(response.stdout).toContain('foo-bar');
@@ -76,6 +79,7 @@ describe('index', () => {
       runWith(['--instructions']).
         then(response => {
           expect(response.code).not.toBe(0);
+          expect(response.stdout).toBe('');
           expect(response.stderr).toContain('ERROR: No PR specified');
           expect(response.stderr).toContain(config.messages.usage);
         }).
