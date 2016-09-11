@@ -325,7 +325,8 @@ describe('Utils', () => {
         baz: 'qux',
         '': 'empty',
         '  ': 'spaces',
-        ' foo ': ' bar ',
+        ' foo ': 'bar with spaces',
+        'f u n': 'fun',
         'f}u}n': 'fun'
       };
     });
@@ -344,23 +345,30 @@ describe('Utils', () => {
       expect(utils.interpolate(input, data)).toBe(expected);
     });
 
-    it('should not trim keys', () => {
-      let input = '{{ foo }}';
-      let expected = ' bar ';
+    it('should trim keys', () => {
+      let input = '{{ foo }} {{   foo   }} {{ \t \r \n foo \n \r \t }}';
+      let expected = 'bar bar bar';
 
       expect(utils.interpolate(input, data)).toBe(expected);
     });
 
-    it('should accept space-only and zero-length keys', () => {
-      let input = '{{}} {{  }}';
-      let expected = 'empty spaces';
+    it('should accept zero-length keys (just because)', () => {
+      let input = '{{}} {{  }} {{\t\r\n}}';
+      let expected = 'empty empty empty';
 
       expect(utils.interpolate(input, data)).toBe(expected);
     });
 
-    it('should replace unknown keys with "undefined"', () => {
-      let input = '{{unknown}}';
-      let expected = 'undefined';
+    it('should not allow whitespace in the key', () => {
+      let input = '{{f u n}}';
+      let expected = '{{f u n}}';
+
+      expect(utils.interpolate(input, data)).toBe(expected);
+    });
+
+    it('should allow `}` in the key', () => {
+      let input = '{{f}u}n}}';
+      let expected = 'fun';
 
       expect(utils.interpolate(input, data)).toBe(expected);
     });
@@ -372,9 +380,9 @@ describe('Utils', () => {
       expect(utils.interpolate(input, data)).toBe(expected);
     });
 
-    it('should allow `}` in the key', () => {
-      let input = '{{f}u}n}}';
-      let expected = 'fun';
+    it('should replace unknown keys with "undefined"', () => {
+      let input = '{{unknown}}';
+      let expected = 'undefined';
 
       expect(utils.interpolate(input, data)).toBe(expected);
     });
