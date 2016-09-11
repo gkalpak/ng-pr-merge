@@ -24,6 +24,7 @@ describe('Merger', () => {
 
   describe('Merger#getPhases()', () => {
     let phaseIds = ['1', '2', '3', '4', '5', '6'];
+    let phaseIdsWithoutError = ['4'];
     let phases;
 
     beforeEach(() => {
@@ -41,14 +42,26 @@ describe('Merger', () => {
     });
 
     phaseIds.forEach(id => {
-      let phase;
+      describe(`- Phase ${id}`, () => {
+        let hasError = phaseIdsWithoutError.indexOf(id) === -1;
+        let phase;
 
-      beforeEach(() => {
-        phase = phases.find(phase => phase.id === id);
-      });
+        beforeEach(() => {
+          phase = phases.find(phase => phase.id === id);
+        });
 
-      it(`should contain a phase with ID \`${id}\``, () => {
-        expect(phase).toBeDefined();
+        it('should exist', () => {
+          expect(phase).toBeDefined();
+        });
+
+        it(`should${hasError ? '' : ' not'} have an error message`, () => {
+          if (hasError) {
+            expect(phase.error).toBeDefined();
+            expect(phase.error).toEqual(jasmine.any(String));
+          } else {
+            expect(phase.error).toBeNull();
+          }
+        });
       });
     });
   });

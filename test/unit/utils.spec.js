@@ -200,26 +200,33 @@ describe('Utils', () => {
         expect(console.error.calls.argsFor(0)[1]).toBe('Test');
       });
 
+      it('should mention that clean-up might be needed', () => {
+        utils.exitWithError()();
+        let message = console.error.calls.argsFor(0)[0].toLowerCase();
+
+        expect(message).toContain('clean-up', 'might', 'needed');
+      });
+
       it('should mention that the operation was aborted', () => {
         utils.exitWithError()();
 
         expect(console.error.calls.argsFor(0)[0]).toContain('OPERATION ABORTED');
       });
 
-      it('should retrieve the error message based on the specified `errCode`', () => {
+      it('should retrieve the error message based on the specified `errOrCode`', () => {
         config.messages.errors.foo = 'bar';
         utils.exitWithError('foo')();
 
         expect(console.error.calls.argsFor(0)[0]).toContain('ERROR: bar');
       });
 
-      it('should use `errCode` itself if it does not match any error message ', () => {
-        utils.exitWithError('unknown errCode')();
+      it('should use `errOrCode` itself if it does not match any error message', () => {
+        utils.exitWithError('unknown code')();
 
-        expect(console.error.calls.argsFor(0)[0]).toContain('ERROR: unknown errCode');
+        expect(console.error.calls.argsFor(0)[0]).toContain('ERROR: unknown code');
       });
 
-      it('should use a default error message if `errCode` is falsy', () => {
+      it('should use a default error message if `errOrCode` is falsy', () => {
         utils.exitWithError()();
         utils.exitWithError(null)();
         utils.exitWithError(false)();
@@ -498,15 +505,30 @@ describe('Utils', () => {
         then(done);
     });
 
-    it('should set up an error callback with the appropriate error code', done => {
-      let doWork = () => Promise.reject('foo');
+    it('should set up an error callback with the appropriate error', done => {
+      let phase = {error: 'foo'};
+      let doWork = () => Promise.reject('bar');
       let errorCb = jasmine.createSpy('errorCb');
       utils.exitWithError.and.returnValue(errorCb);
 
-      utils.phase({}, doWork).
-        catch(() => {
-          expect(utils.exitWithError.calls.argsFor(0)[0]).toBe('ERROR_phasefoo');
-          expect(errorCb).toHaveBeenCalledWith('foo');
+      utils.phase(phase, doWork).
+        then(() => {
+          expect(utils.exitWithError.calls.argsFor(0)[0]).toBe('foo');
+          expect(errorCb).toHaveBeenCalledWith('bar');
+        }).
+        then(done);
+    });
+
+    it('should fall back to a default error for the error callback', done => {
+      let phase = {error: null};
+      let doWork = () => Promise.reject('bar');
+      let errorCb = jasmine.createSpy('errorCb');
+      utils.exitWithError.and.returnValue(errorCb);
+
+      utils.phase(phase, doWork).
+        then(() => {
+          expect(utils.exitWithError.calls.argsFor(0)[0]).toBe('ERROR_unexpected');
+          expect(errorCb).toHaveBeenCalledWith('bar');
         }).
         then(done);
     });

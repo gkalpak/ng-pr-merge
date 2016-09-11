@@ -46,7 +46,6 @@ describe('Config', () => {
   });
 
   describe('#messages', () => {
-    let phaseIds = ['1', '2', '3', '4', '5', '6', 'X'];
     let messages;
 
     beforeEach(() => {
@@ -108,6 +107,11 @@ describe('Config', () => {
       it('should have a thought-provoking ID', () => {
         expect(cleanUpPhase.id).toBe('X');
       });
+
+      it('should have an error message', () => {
+        expect(cleanUpPhase.error).toBeDefined();
+        expect(cleanUpPhase.error).toEqual(jasmine.any(String));
+      });
     });
 
     describe('#errors', () => {
@@ -126,15 +130,6 @@ describe('Config', () => {
       it(`should have all its keys prefixed with \`${keyPrefix}\``, () => {
         Object.keys(errors).forEach(key => {
           expect(key.indexOf(keyPrefix)).toBe(0);
-        });
-      });
-
-      it('should have an error message (string) for each phase', () => {
-        phaseIds.forEach(id => {
-          let key = `${keyPrefix}phase${id}`;
-
-          expect(errors[key]).toBeDefined();
-          expect(errors[key]).toEqual(jasmine.any(String));
         });
       });
 
