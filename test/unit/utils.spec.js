@@ -321,45 +321,60 @@ describe('Utils', () => {
 
     beforeEach(() => {
       data = {
+        foo: 'bar',
+        baz: 'qux',
         '': 'empty',
         '  ': 'spaces',
         ' foo ': ' bar ',
-        foo: 'bar',
-        baz: 'qux'
+        'f}u}n': 'fun'
       };
     });
 
-    it('should replace `${...}`', () => {
-      let input = '${foo}';
+    it('should replace `{{...}}`', () => {
+      let input = '{{foo}}';
       let expected = 'bar';
 
       expect(utils.interpolate(input, data)).toBe(expected);
     });
 
     it('should replace all instances', () => {
-      let input = ' ${foo} ${baz} ${foo} ';
+      let input = ' {{foo}} {{baz}} {{foo}} ';
       let expected = ' bar qux bar ';
 
       expect(utils.interpolate(input, data)).toBe(expected);
     });
 
     it('should not trim keys', () => {
-      let input = '${ foo }';
+      let input = '{{ foo }}';
       let expected = ' bar ';
 
       expect(utils.interpolate(input, data)).toBe(expected);
     });
 
     it('should accept space-only and zero-length keys', () => {
-      let input = '${} ${  }';
+      let input = '{{}} {{  }}';
       let expected = 'empty spaces';
 
       expect(utils.interpolate(input, data)).toBe(expected);
     });
 
     it('should replace unknown keys with "undefined"', () => {
-      let input = '${unknown}';
+      let input = '{{unknown}}';
       let expected = 'undefined';
+
+      expect(utils.interpolate(input, data)).toBe(expected);
+    });
+
+    it('should eagerly match `}}`', () => {
+      let input = '{{foo}}baz}}';
+      let expected = 'barbaz}}';
+
+      expect(utils.interpolate(input, data)).toBe(expected);
+    });
+
+    it('should allow `}` in the key', () => {
+      let input = '{{f}u}n}}';
+      let expected = 'fun';
 
       expect(utils.interpolate(input, data)).toBe(expected);
     });

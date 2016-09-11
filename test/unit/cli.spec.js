@@ -132,7 +132,7 @@ describe('Cli', () => {
       cli._config.messages.phases = {
         phase: {
           description: '',
-          instructions: ['foo: ${bar}', '${baz}: qux']
+          instructions: ['foo: {{bar}}', '{{baz}}: qux']
         }
       };
 
