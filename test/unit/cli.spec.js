@@ -8,6 +8,7 @@ let CleanUper = require('../../lib/clean-uper');
 let Cli = require('../../lib/cli');
 let Config = require('../../lib/config');
 let Merger = require('../../lib/merger');
+let Phase = require('../../lib/phase');
 let Utils = require('../../lib/utils');
 
 // Tests
@@ -57,6 +58,13 @@ describe('Cli', () => {
   });
 
   describe('#_displayInstructions()', () => {
+    let mockPhases;
+
+    beforeEach(() => {
+      mockPhases = [];
+      spyOn(Merger, 'getPhases').and.callFake(() => mockPhases);
+    });
+
     it('should mention "instructions"', () => {
       cli._displayInstructions({});
 
@@ -72,16 +80,10 @@ describe('Cli', () => {
     });
 
     it('should display the ID and description of each phase', () => {
-      cli._config.messages.phases = {
-        foo: {
-          description: 'bar',
-          instructions: ['instruction 1', 'instruction 2']
-        },
-        baz: {
-          description: 'qux',
-          instructions: ['instruction 3', 'instruction 4']
-        }
-      };
+      mockPhases = [
+        new Phase('foo', 'bar', ['instruction 1', 'instruction 2']),
+        new Phase('baz', 'qux', ['instruction 3', 'instruction 4'])
+      ];
 
       cli._displayInstructions({});
 
@@ -92,16 +94,10 @@ describe('Cli', () => {
     });
 
     it('should not display anything about phases with no instructions', () => {
-      cli._config.messages.phases = {
-        foo: {
-          description: 'bar',
-          instructions: []
-        },
-        baz: {
-          description: 'qux',
-          instructions: []
-        }
-      };
+      mockPhases = [
+        new Phase('foo', 'bar', []),
+        new Phase('baz', 'qux', [])
+      ];
 
       cli._displayInstructions({});
 
@@ -109,16 +105,10 @@ describe('Cli', () => {
     });
 
     it('should display the instructions of each phase', () => {
-      cli._config.messages.phases = {
-        foo: {
-          description: 'bar',
-          instructions: ['instruction 1', 'instruction 2']
-        },
-        baz: {
-          description: 'qux',
-          instructions: ['instruction 3', 'instruction 4']
-        }
-      };
+      mockPhases = [
+        new Phase('foo', 'bar', ['instruction 1', 'instruction 2']),
+        new Phase('baz', 'qux', ['instruction 3', 'instruction 4'])
+      ];
 
       cli._displayInstructions({});
 
@@ -129,12 +119,9 @@ describe('Cli', () => {
     });
 
     it('should interpolate each instruction', () => {
-      cli._config.messages.phases = {
-        phase: {
-          description: '',
-          instructions: ['foo: {{bar}}', '{{baz}}: qux']
-        }
-      };
+      mockPhases = [
+        new Phase('phase', '', ['foo: {{bar}}', '{{baz}}: qux'])
+      ];
 
       cli._displayInstructions({bar: 'bar', baz: 'baz'});
 
@@ -143,12 +130,9 @@ describe('Cli', () => {
     });
 
     it('should format `...` specially', () => {
-      cli._config.messages.phases = {
-        phase: {
-          description: '',
-          instructions: ['foo `bar` baz `qux`']
-        }
-      };
+      mockPhases = [
+        new Phase('phase', '', ['foo `bar` baz `qux`'])
+      ];
 
       cli._displayInstructions({});
 

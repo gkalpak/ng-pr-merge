@@ -7,6 +7,7 @@ let ClaChecker = require('@gkalpak/ng-cla-check');
 let CleanUper = require('../../lib/clean-uper');
 let GitUtils = require('../../lib/git-utils');
 let Merger = require('../../lib/merger');
+let Phase = require('../../lib/phase');
 let Utils = require('../../lib/utils');
 
 // Tests
@@ -19,6 +20,37 @@ describe('Merger', () => {
     cleanUper = new CleanUper();
     utils = new Utils(cleanUper, {});
     gUtils = new GitUtils(cleanUper, utils);
+  });
+
+  describe('Merger#getPhases()', () => {
+    let phaseIds = ['1', '2', '3', '4', '5', '6'];
+    let phases;
+
+    beforeEach(() => {
+      phases = Merger.getPhases();
+    });
+
+    it('should return an array (Phase[])', () => {
+      expect(phases).toBeDefined();
+      expect(phases).toEqual(jasmine.any(Array));
+
+      phases.forEach(phase => {
+        expect(phase).toBeDefined();
+        expect(phase).toEqual(jasmine.any(Phase));
+      });
+    });
+
+    phaseIds.forEach(id => {
+      let phase;
+
+      beforeEach(() => {
+        phase = phases.find(phase => phase.id === id);
+      });
+
+      it(`should contain a phase with ID \`${id}\``, () => {
+        expect(phase).toBeDefined();
+      });
+    });
   });
 
   describe('Merger#getPrUrl()', () => {
@@ -146,9 +178,10 @@ describe('Merger', () => {
 
     describe('#phase1()', () => {
       it('should call `utils.phase()` (and return the returned value)', () => {
+        let phase = jasmine.objectContaining({id: '1'});
         let value = merger.phase1();
 
-        expect(utils.phase).toHaveBeenCalledWith(1, jasmine.any(Function));
+        expect(utils.phase).toHaveBeenCalledWith(phase, jasmine.any(Function));
         expect(value).toBe(returnedPromise);
       });
 
@@ -191,7 +224,9 @@ describe('Merger', () => {
       });
 
       it('should call `utils.phase()` (and return the returned value)', () => {
-        expect(utils.phase).toHaveBeenCalledWith(2, jasmine.any(Function));
+        let phase = jasmine.objectContaining({id: '2'});
+
+        expect(utils.phase).toHaveBeenCalledWith(phase, jasmine.any(Function));
         expect(promise).toBe(returnedPromise);
       });
 
@@ -257,7 +292,9 @@ describe('Merger', () => {
       });
 
       it('should call `utils.phase()` (and return the returned value)', () => {
-        expect(utils.phase).toHaveBeenCalledWith(3, jasmine.any(Function));
+        let phase = jasmine.objectContaining({id: '3'});
+
+        expect(utils.phase).toHaveBeenCalledWith(phase, jasmine.any(Function));
         expect(promise).toBe(returnedPromise);
       });
 
@@ -347,7 +384,9 @@ describe('Merger', () => {
       });
 
       it('should call `utils.phase()` (and return the returned value)', () => {
-        expect(utils.phase).toHaveBeenCalledWith(4, jasmine.any(Function));
+        let phase = jasmine.objectContaining({id: '4'});
+
+        expect(utils.phase).toHaveBeenCalledWith(phase, jasmine.any(Function));
         expect(promise).toBe(returnedPromise);
       });
 
@@ -376,7 +415,9 @@ describe('Merger', () => {
       });
 
       it('should call `utils.phase()` (and return the returned value)', () => {
-        expect(utils.phase).toHaveBeenCalledWith(5, jasmine.any(Function));
+        let phase = jasmine.objectContaining({id: '5'});
+
+        expect(utils.phase).toHaveBeenCalledWith(phase, jasmine.any(Function));
         expect(promise).toBe(returnedPromise);
       });
 
@@ -436,7 +477,9 @@ describe('Merger', () => {
       });
 
       it('should call `utils.phase()` (and return the returned value)', () => {
-        expect(utils.phase).toHaveBeenCalledWith(6, jasmine.any(Function));
+        let phase = jasmine.objectContaining({id: '6'});
+
+        expect(utils.phase).toHaveBeenCalledWith(phase, jasmine.any(Function));
         expect(promise).toBe(returnedPromise);
       });
 

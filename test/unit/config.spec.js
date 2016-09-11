@@ -2,6 +2,7 @@
 
 // Imports - Local
 let Config = require('../../lib/config');
+let Phase = require('../../lib/phase');
 
 // Tests
 describe('Config', () => {
@@ -45,7 +46,7 @@ describe('Config', () => {
   });
 
   describe('#messages', () => {
-    let phaseNames = ['1', '2', '3', '4', '5', '6', 'X'];
+    let phaseIds = ['1', '2', '3', '4', '5', '6', 'X'];
     let messages;
 
     beforeEach(() => {
@@ -92,49 +93,20 @@ describe('Config', () => {
       });
     });
 
-    describe('#phases', () => {
-      let phases;
+    describe('#cleanUpPhase', () => {
+      let cleanUpPhase;
 
       beforeEach(() => {
-        phases = messages.phases;
+        cleanUpPhase = messages.cleanUpPhase;
       });
 
-      it('should be an object', () => {
-        expect(phases).toBeDefined();
-        expect(phases).toEqual(jasmine.any(Object));
+      it('should be a `Phase` object', () => {
+        expect(cleanUpPhase).toBeDefined();
+        expect(cleanUpPhase).toEqual(jasmine.any(Phase));
       });
 
-      phaseNames.forEach(name => {
-        describe(` - Phase ${name}`, () => {
-          let phase;
-
-          beforeEach(() => {
-            phase = phases[name];
-          });
-
-          it('should be an object', () => {
-            expect(phase).toBeDefined();
-            expect(phase).toEqual(jasmine.any(Object));
-          });
-
-          it('should have a `description` property (string)', () => {
-            let description = phase.description;
-
-            expect(description).toBeDefined();
-            expect(description).toEqual(jasmine.any(String));
-          });
-
-          it('should have an `instructions` property (string[])', () => {
-            let instructions = phase.instructions;
-
-            expect(instructions).toBeDefined();
-            expect(instructions).toEqual(jasmine.any(Array));
-
-            instructions.forEach(instruction => {
-              expect(instruction).toEqual(jasmine.any(String));
-            });
-          });
-        });
+      it('should have a thought-provoking ID', () => {
+        expect(cleanUpPhase.id).toBe('X');
       });
     });
 
@@ -158,8 +130,8 @@ describe('Config', () => {
       });
 
       it('should have an error message (string) for each phase', () => {
-        phaseNames.forEach(name => {
-          let key = `${keyPrefix}phase${name}`;
+        phaseIds.forEach(id => {
+          let key = `${keyPrefix}phase${id}`;
 
           expect(errors[key]).toBeDefined();
           expect(errors[key]).toEqual(jasmine.any(String));

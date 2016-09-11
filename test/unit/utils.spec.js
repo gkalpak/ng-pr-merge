@@ -9,6 +9,7 @@ let readline = require('readline');
 // Imports - Local
 let CleanUper = require('../../lib/clean-uper');
 let Config = require('../../lib/config');
+let Phase = require('../../lib/phase');
 let Utils = require('../../lib/utils');
 
 // Tests
@@ -395,8 +396,8 @@ describe('Utils', () => {
       spyOn(console, 'log');
       spyOn(cleanUper, 'cleanUp');
 
-      spyOn(utils, 'phase').and.callFake((phaseId, doWork, skipCleanUp) => {
-        expect(phaseId).toBe('X');
+      spyOn(utils, 'phase').and.callFake((phase, doWork, skipCleanUp) => {
+        expect(phase).toBe(config.messages.cleanUpPhase);
         expect(doWork).toEqual(jasmine.any(Function));
         expect(skipCleanUp).toBe(true);
 
@@ -448,30 +449,29 @@ describe('Utils', () => {
 
     beforeEach(() => {
       dummyDoWork = () => new Promise(() => {});
-      config.messages.phases.foo = {description: 'bar'};
 
       spyOn(console, 'log');
       spyOn(utils, 'exitWithError');
     });
 
     it('should log the phase\'s ID and description to the console', () => {
-      utils.phase('foo', dummyDoWork);
+      utils.phase(new Phase('foo', 'bar'), dummyDoWork);
 
       expect(console.log.calls.argsFor(0)[0]).toMatch(/\WPHASE foo\W+bar\W/);
     });
 
     it('should only accept a `doWork` callback that returns a promise', () => {
-      expect(() => utils.phase('foo', {})).toThrow();
-      expect(() => utils.phase('foo', () => {})).toThrow();
-      expect(() => utils.phase('foo', dummyDoWork)).not.toThrow();
+      expect(() => utils.phase({}, {})).toThrow();
+      expect(() => utils.phase({}, () => {})).toThrow();
+      expect(() => utils.phase({}, dummyDoWork)).not.toThrow();
     });
 
     it('should return a promise', () => {
-      expect(utils.phase('foo', dummyDoWork)).toEqual(jasmine.any(Promise));
+      expect(utils.phase({}, dummyDoWork)).toEqual(jasmine.any(Promise));
     });
 
     it('should resolve the returned promise with the value "returned" by `doWork()`', done => {
-      utils.phase('foo', () => Promise.resolve('bar')).
+      utils.phase({}, () => Promise.resolve('bar')).
         then(value => expect(value).toBe('bar')).
         then(done);
     });
@@ -482,7 +482,7 @@ describe('Utils', () => {
         return Promise.resolve();
       };
 
-      utils.phase('foo', doWork).
+      utils.phase({}, doWork).
         then(() => expect(console.log.calls.mostRecent().args[0]).toContain('done')).
         then(done);
     });
@@ -493,7 +493,7 @@ describe('Utils', () => {
         return Promise.reject();
       };
 
-      utils.phase('foo', doWork).
+      utils.phase({}, doWork).
         catch(() => expect(console.log).not.toHaveBeenCalled()).
         then(done);
     });
@@ -503,7 +503,7 @@ describe('Utils', () => {
       let errorCb = jasmine.createSpy('errorCb');
       utils.exitWithError.and.returnValue(errorCb);
 
-      utils.phase('foo', doWork).
+      utils.phase({}, doWork).
         catch(() => {
           expect(utils.exitWithError.calls.argsFor(0)[0]).toBe('ERROR_phasefoo');
           expect(errorCb).toHaveBeenCalledWith('foo');
@@ -512,9 +512,9 @@ describe('Utils', () => {
     });
 
     it('should support skipping clean-up', () => {
-      utils.phase('foo', dummyDoWork);
-      utils.phase('foo', dummyDoWork, false);
-      utils.phase('foo', dummyDoWork, true);
+      utils.phase({}, dummyDoWork);
+      utils.phase({}, dummyDoWork, false);
+      utils.phase({}, dummyDoWork, true);
 
       expect(utils.exitWithError.calls.argsFor(0)[1]).toBeFalsy();
       expect(utils.exitWithError.calls.argsFor(1)[1]).toBeFalsy();
@@ -584,17 +584,18 @@ describe('Utils', () => {
     });
 
     it('should parse the specified command (respecting double-quoted values)', () => {
+      let anyObj = jasmine.any(Object);
       let parsedArgs;
 
       utils.spawnAsPromised('foo     "bar" --baz --qux="foo bar" "baz qux"');
       parsedArgs = ['bar', '--baz', '--qux="foo bar"', 'baz qux'];
 
-      expect(childProcess.spawn).toHaveBeenCalledWith('foo', parsedArgs, jasmine.any(Object));
+      expect(childProcess.spawn).toHaveBeenCalledWith('foo', parsedArgs, anyObj);
 
       utils.spawnAsPromised('"foo"     "bar" --baz --qux="foo bar" "baz qux"');
       parsedArgs = ['bar', '--baz', '--qux="foo bar"', 'baz qux'];
 
-      expect(childProcess.spawn).toHaveBeenCalledWith('foo', parsedArgs, jasmine.any(Object));
+      expect(childProcess.spawn).toHaveBeenCalledWith('foo', parsedArgs, anyObj);
     });
 
     it('should support command "piping" (and spawn a process for each command)', () => {
