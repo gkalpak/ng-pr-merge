@@ -1,7 +1,7 @@
 {
   "name": "@gkalpak/ng-pr-merge",
   "version": "0.0.13",
-  "description": "A utility for rebase-merging AngularJS PRs into master.",
+  "description": "A utility for rebase-merging (AngularJS-related) GitHub PRs.",
   "keywords": [
     "Utility",
     "AngularJS"

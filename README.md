@@ -6,7 +6,7 @@ _Use at your own risk!_
 
 ## Description
 
-A utility for rebase-merging AngularJS PRs into master.
+A utility for rebase-merging (AngularJS-related) GitHub PRs.
 Tasks performed:
 
 1. Verify CLA signature.
