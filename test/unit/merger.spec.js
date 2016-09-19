@@ -2,24 +2,29 @@
 
 // Imports
 let ClaChecker = require('@gkalpak/ng-cla-check');
+let ngMaintainUtils = require('@gkalpak/ng-maintain-utils');
+
+let CleanUper = ngMaintainUtils.CleanUper;
+let GitUtils = ngMaintainUtils.GitUtils;
+let Phase = ngMaintainUtils.Phase;
+let UiUtils = ngMaintainUtils.UiUtils;
+let Utils = ngMaintainUtils.Utils;
 
 // Imports - Local
-let CleanUper = require('../../lib/clean-uper');
-let GitUtils = require('../../lib/git-utils');
 let Merger = require('../../lib/merger');
-let Phase = require('../../lib/phase');
-let Utils = require('../../lib/utils');
 
 // Tests
 describe('Merger', () => {
   let cleanUper;
-  let gUtils;
+  let gitUtils;
+  let uiUtils;
   let utils;
 
   beforeEach(() => {
     cleanUper = new CleanUper();
-    utils = new Utils(cleanUper, {});
-    gUtils = new GitUtils(cleanUper, utils);
+    utils = new Utils();
+    uiUtils = new UiUtils(cleanUper, {});
+    gitUtils = new GitUtils(cleanUper, utils);
   });
 
   describe('Merger#getPhases()', () => {
@@ -85,27 +90,35 @@ describe('Merger', () => {
   });
 
   describe('#constructor()', () => {
-    it('should accept `cleanUper`, `utils`, `gUtils` and `input` arguments', () => {
+    it('should accept `cleanUper`, `utils`, `uiUtils`, `gitUtils` and `input` arguments', () => {
       let input = {};
       let merger = createMerger(input);
 
       expect(merger._cleanUper).toBe(cleanUper);
       expect(merger._utils).toBe(utils);
-      expect(merger._gUtils).toBe(gUtils);
+      expect(merger._uiUtils).toBe(uiUtils);
+      expect(merger._gitUtils).toBe(gitUtils);
       expect(merger._input).toBe(input);
-    });
-
-    it('should create a `_tempBranch` property', () => {
-      spyOn(Merger, 'getTempBranch').and.returnValue('foo');
-      let merger = createMerger({});
-
-      expect(merger._tempBranch).toBe('foo');
     });
 
     it('should create a `_claChecker` property (ClaChecker)', () => {
       let merger = createMerger({});
 
       expect(merger._claChecker).toEqual(jasmine.any(ClaChecker));
+    });
+
+    it('should create a `_phases` property', () => {
+      spyOn(Merger, 'getPhases').and.returnValue('foo');
+      let merger = createMerger({});
+
+      expect(merger._phases).toBe('foo');
+    });
+
+    it('should create a `_tempBranch` property', () => {
+      spyOn(Merger, 'getTempBranch').and.returnValue('bar');
+      let merger = createMerger({});
+
+      expect(merger._tempBranch).toBe('bar');
     });
 
     it('should register clean-up tasks', () => {
@@ -181,7 +194,7 @@ describe('Merger', () => {
       doWork = null;
       returnedPromise = null;
 
-      spyOn(utils, 'phase').and.callFake((_, cb) => {
+      spyOn(uiUtils, 'phase').and.callFake((_, cb) => {
         doWork = cb;
         returnedPromise = new Promise(() => {});
 
@@ -190,11 +203,11 @@ describe('Merger', () => {
     });
 
     describe('#phase1()', () => {
-      it('should call `utils.phase()` (and return the returned value)', () => {
+      it('should call `uiUtils.phase()` (and return the returned value)', () => {
         let phase = jasmine.objectContaining({id: '1'});
         let value = merger.phase1();
 
-        expect(utils.phase).toHaveBeenCalledWith(phase, jasmine.any(Function));
+        expect(uiUtils.phase).toHaveBeenCalledWith(phase, jasmine.any(Function));
         expect(value).toBe(returnedPromise);
       });
 
@@ -208,17 +221,37 @@ describe('Merger', () => {
       });
 
       it('should ask confirmation if the CLA signature check fails', done => {
-        spyOn(utils, 'askYesOrNoQuestion');
+        spyOn(uiUtils, 'askYesOrNoQuestion');
         spyOn(merger._claChecker, 'check').and.returnValue(Promise.reject());
 
         merger.phase1();
         doWork();
 
         setTimeout(() => {
-          expect(utils.askYesOrNoQuestion).toHaveBeenCalled();
+          expect(uiUtils.askYesOrNoQuestion).toHaveBeenCalled();
 
           done();
         });
+      });
+
+      it('should resolve the returned promise if the user confirms', done => {
+        spyOn(uiUtils, 'askYesOrNoQuestion').and.returnValue(Promise.resolve());
+        spyOn(merger._claChecker, 'check').and.returnValue(Promise.reject());
+
+        merger.phase1();
+        doWork().
+          then(() => expect(uiUtils.askYesOrNoQuestion).toHaveBeenCalled()).
+          then(done);
+      });
+
+      it('should reject the returned promise if the user does not confirm', done => {
+        spyOn(uiUtils, 'askYesOrNoQuestion').and.returnValue(Promise.reject());
+        spyOn(merger._claChecker, 'check').and.returnValue(Promise.reject());
+
+        merger.phase1();
+        doWork().
+          then(() => expect(uiUtils.askYesOrNoQuestion).toHaveBeenCalled()).
+          catch(done);
       });
     });
 
@@ -228,18 +261,18 @@ describe('Merger', () => {
       beforeEach(() => {
         spyOn(cleanUper, 'schedule');
         spyOn(cleanUper, 'unschedule');
-        spyOn(gUtils, 'checkout');
-        spyOn(gUtils, 'createBranch');
-        spyOn(gUtils, 'mergePullRequest');
-        spyOn(gUtils, 'pull');
+        spyOn(gitUtils, 'checkout');
+        spyOn(gitUtils, 'createBranch');
+        spyOn(gitUtils, 'mergePullRequest');
+        spyOn(gitUtils, 'pull');
 
         promise = merger.phase2();
       });
 
-      it('should call `utils.phase()` (and return the returned value)', () => {
+      it('should call `uiUtils.phase()` (and return the returned value)', () => {
         let phase = jasmine.objectContaining({id: '2'});
 
-        expect(utils.phase).toHaveBeenCalledWith(phase, jasmine.any(Function));
+        expect(uiUtils.phase).toHaveBeenCalledWith(phase, jasmine.any(Function));
         expect(promise).toBe(returnedPromise);
       });
 
@@ -252,21 +285,21 @@ describe('Merger', () => {
 
         doWork().
           then(() => {
-            expect(gUtils.checkout).toHaveBeenCalledWith(branch);
-            expect(gUtils.pull).toHaveBeenCalledWith(branch, true);
-            expect(gUtils.createBranch).toHaveBeenCalledWith(tempBranch);
+            expect(gitUtils.checkout).toHaveBeenCalledWith(branch);
+            expect(gitUtils.pull).toHaveBeenCalledWith(branch, true);
+            expect(gitUtils.createBranch).toHaveBeenCalledWith(tempBranch);
             expect(cleanUper.schedule.calls.argsFor(0)[0]).toBe(deleteTempBranchTask);
             expect(cleanUper.schedule.calls.argsFor(1)[0]).toBe(checkoutBranchTask);
-            expect(gUtils.mergePullRequest).toHaveBeenCalledWith(prUrl);
+            expect(gitUtils.mergePullRequest).toHaveBeenCalledWith(prUrl);
           }).
           then(done);
       });
 
-      it('should schedule clean-up tasks before calling `gUtils.mergePullRequest()`', done => {
+      it('should schedule clean-up tasks before calling `gitUtils.mergePullRequest()`', done => {
         let checkoutBranchTask = merger._cleanUpTasks.checkoutBranch;
         let deleteTempBranchTask = merger._cleanUpTasks.deleteTempBranch;
 
-        gUtils.mergePullRequest.and.callFake(() => {
+        gitUtils.mergePullRequest.and.callFake(() => {
           expect(cleanUper.schedule.calls.argsFor(0)[0]).toBe(deleteTempBranchTask);
           expect(cleanUper.schedule.calls.argsFor(1)[0]).toBe(checkoutBranchTask);
           expect(cleanUper.unschedule).not.toHaveBeenCalled();
@@ -279,7 +312,7 @@ describe('Merger', () => {
         doWork();
       });
 
-      it('should schedule leave the clean-up tasks scheduled after completion', done => {
+      it('should leave the clean-up tasks scheduled after completion', done => {
         doWork().
           then(() => {
             expect(cleanUper.schedule).toHaveBeenCalled();
@@ -295,19 +328,19 @@ describe('Merger', () => {
       beforeEach(() => {
         spyOn(cleanUper, 'schedule'),
         spyOn(cleanUper, 'unschedule'),
-        spyOn(gUtils, 'checkout'),
-        spyOn(gUtils, 'countCommitsSince'),
-        spyOn(gUtils, 'deleteBranch'),
-        spyOn(gUtils, 'rebase'),
-        spyOn(gUtils, 'updateLastCommitMessage');
+        spyOn(gitUtils, 'checkout'),
+        spyOn(gitUtils, 'countCommitsSince'),
+        spyOn(gitUtils, 'deleteBranch'),
+        spyOn(gitUtils, 'rebase'),
+        spyOn(gitUtils, 'updateLastCommitMessage');
 
         promise = merger.phase3();
       });
 
-      it('should call `utils.phase()` (and return the returned value)', () => {
+      it('should call `uiUtils.phase()` (and return the returned value)', () => {
         let phase = jasmine.objectContaining({id: '3'});
 
-        expect(utils.phase).toHaveBeenCalledWith(phase, jasmine.any(Function));
+        expect(uiUtils.phase).toHaveBeenCalledWith(phase, jasmine.any(Function));
         expect(promise).toBe(returnedPromise);
       });
 
@@ -320,7 +353,7 @@ describe('Merger', () => {
           let deleteTempBranchTask = merger._cleanUpTasks.deleteTempBranch;
           let hardResetTask = merger._cleanUpTasks.hardReset;
 
-          gUtils.countCommitsSince.and.returnValue(commitCount);
+          gitUtils.countCommitsSince.and.returnValue(commitCount);
 
           doWork().
             then(() => {
@@ -329,49 +362,51 @@ describe('Merger', () => {
               let s = -1;   // `schedule()` call index
               let u = -1;   // `unschedule()` call index
 
-              expect(gUtils.countCommitsSince).toHaveBeenCalledWith(branch),
-              expect(gUtils.checkout).toHaveBeenCalledWith(branch),
+              expect(gitUtils.countCommitsSince).toHaveBeenCalledWith(branch),
+              expect(gitUtils.checkout).toHaveBeenCalledWith(branch),
               expect(cleanUper.unschedule.calls.argsFor(++u)[0]).toBe(checkoutBranchTask);
               expect(cleanUper.schedule.calls.argsFor(++s)[0]).toBe(abortRebaseTask);
-              expect(gUtils.rebase).toHaveBeenCalledWith(tempBranch);
+              expect(gitUtils.rebase).toHaveBeenCalledWith(tempBranch);
               expect(cleanUper.unschedule.calls.argsFor(++u)[0]).toBe(abortRebaseTask);
               expect(cleanUper.schedule.calls.argsFor(++s)[0]).toBe(hardResetTask);
-              expect(gUtils.deleteBranch).toHaveBeenCalledWith(tempBranch, true),
+              expect(gitUtils.deleteBranch).toHaveBeenCalledWith(tempBranch, true),
               expect(cleanUper.unschedule.calls.argsFor(++u)[0]).toBe(deleteTempBranchTask);
               if (mustRebaseMerged) {
                 expect(cleanUper.schedule.calls.argsFor(++s)[0]).toBe(abortRebaseTask);
-                expect(gUtils.rebase).toHaveBeenCalledWith(commitCount, true);
+                expect(gitUtils.rebase).toHaveBeenCalledWith(commitCount, true);
                 expect(cleanUper.unschedule.calls.argsFor(++u)[0]).toBe(abortRebaseTask);
               }
-              expect(gUtils.updateLastCommitMessage).toHaveBeenCalledWith(jasmine.any(Function));
+              expect(gitUtils.updateLastCommitMessage).toHaveBeenCalledWith(jasmine.any(Function));
               expect(cleanUper.unschedule.calls.argsFor(++u)[0]).toBe(hardResetTask);
 
-              expect(gUtils.rebase.calls.count()).toBe(expectedRebaseCount);
+              expect(gitUtils.rebase.calls.count()).toBe(expectedRebaseCount);
             }).
             then(done);
         });
       });
 
-      it('should schedule clean-up task before calling `gUtils.rebase()`', done => {
+      it('should schedule clean-up task before calling `gitUtils.rebase()`', done => {
         let abortRebaseTask = merger._cleanUpTasks.abortRebase;
 
         cleanUper.schedule.and.callFake(() => cleanUper.unschedule.calls.reset());
-        gUtils.countCommitsSince.and.returnValue(42);
-        gUtils.rebase.and.callFake(() => {
+        gitUtils.countCommitsSince.and.returnValue(42);
+        gitUtils.rebase.and.callFake(() => {
           expect(cleanUper.schedule.calls.mostRecent().args[0]).toBe(abortRebaseTask);
           if (cleanUper.unschedule.calls.any()) {
             expect(cleanUper.unschedule.calls.mostRecent().args[0]).not.toBe(abortRebaseTask);
           }
         });
 
-        doWork().then(done);
+        doWork().
+          then(() => expect(gitUtils.rebase).toHaveBeenCalled()).
+          then(done);
       });
 
       it('should wrap certain operations in a `hardReset` clean-up task', done => {
         let hardResetTask = merger._cleanUpTasks.hardReset;
 
         cleanUper.schedule.and.callFake(() => cleanUper.unschedule.calls.reset());
-        gUtils.deleteBranch.and.callFake(() => {
+        gitUtils.deleteBranch.and.callFake(() => {
           expect(cleanUper.schedule.calls.mostRecent().args[0]).toBe(hardResetTask);
           if (cleanUper.unschedule.calls.any()) {
             expect(cleanUper.unschedule.calls.mostRecent().args[0]).not.toBe(hardResetTask);
@@ -379,6 +414,7 @@ describe('Merger', () => {
         });
 
         doWork().
+          then(() => expect(gitUtils.deleteBranch).toHaveBeenCalled()).
           then(() => expect(cleanUper.unschedule.calls.mostRecent().args[0]).toBe(hardResetTask)).
           then(done);
       });
@@ -390,16 +426,16 @@ describe('Merger', () => {
       beforeEach(() => {
         spyOn(console, 'log');
         spyOn(utils, 'waitAsPromised');
-        spyOn(gUtils, 'diff');
-        spyOn(gUtils, 'log');
+        spyOn(gitUtils, 'diff');
+        spyOn(gitUtils, 'log');
 
         promise = merger.phase4();
       });
 
-      it('should call `utils.phase()` (and return the returned value)', () => {
+      it('should call `uiUtils.phase()` (and return the returned value)', () => {
         let phase = jasmine.objectContaining({id: '4'});
 
-        expect(utils.phase).toHaveBeenCalledWith(phase, jasmine.any(Function));
+        expect(uiUtils.phase).toHaveBeenCalledWith(phase, jasmine.any(Function));
         expect(promise).toBe(returnedPromise);
       });
 
@@ -408,8 +444,8 @@ describe('Merger', () => {
 
         doWork().
           then(() => {
-            expect(gUtils.diff).toHaveBeenCalledWith(`origin/${branch}`);
-            expect(gUtils.log).toHaveBeenCalled();
+            expect(gitUtils.diff).toHaveBeenCalledWith(`origin/${branch}`);
+            expect(gitUtils.log).toHaveBeenCalledWith();
           }).
           then(done);
       });
@@ -420,22 +456,21 @@ describe('Merger', () => {
 
       beforeEach(() => {
         spyOn(console, 'log');
-        spyOn(utils, 'askYesOrNoQuestion');
-        spyOn(utils, 'getRunWithNodeCmd');
+        spyOn(uiUtils, 'askYesOrNoQuestion');
         spyOn(utils, 'spawnAsPromised');
 
         promise = merger.phase5();
       });
 
-      it('should call `utils.phase()` (and return the returned value)', () => {
+      it('should call `uiUtils.phase()` (and return the returned value)', () => {
         let phase = jasmine.objectContaining({id: '5'});
 
-        expect(utils.phase).toHaveBeenCalledWith(phase, jasmine.any(Function));
+        expect(uiUtils.phase).toHaveBeenCalledWith(phase, jasmine.any(Function));
         expect(promise).toBe(returnedPromise);
       });
 
       it('should ask confirmation before running the CI checks', done => {
-        utils.askYesOrNoQuestion.and.callFake(() => {
+        uiUtils.askYesOrNoQuestion.and.callFake(() => {
           expect(console.log).not.toHaveBeenCalled();
           expect(utils.spawnAsPromised).not.toHaveBeenCalled();
 
@@ -443,37 +478,37 @@ describe('Merger', () => {
         });
 
         doWork().
-          then(() => expect(utils.askYesOrNoQuestion).toHaveBeenCalled()).
+          then(() => expect(uiUtils.askYesOrNoQuestion).toHaveBeenCalled()).
           then(done);
       });
 
       it('should resolve the returned promise even if the user does not confirm', done => {
-        utils.askYesOrNoQuestion.and.returnValue(Promise.reject());
+        uiUtils.askYesOrNoQuestion.and.returnValue(Promise.reject());
 
         doWork().then(done);
       });
 
       it('should do nothing if the user does not confirm', done => {
-        utils.askYesOrNoQuestion.and.returnValue(Promise.reject());
+        uiUtils.askYesOrNoQuestion.and.returnValue(Promise.reject());
 
         doWork().
           then(() => {
             expect(console.log).not.toHaveBeenCalled();
-            expect(utils.getRunWithNodeCmd).not.toHaveBeenCalled();
             expect(utils.spawnAsPromised).not.toHaveBeenCalled();
           }).
           then(done);
       });
 
       it('should run the CI checks if the user confirms', done => {
-        utils.askYesOrNoQuestion.and.returnValue(Promise.resolve());
-        utils.getRunWithNodeCmd.and.returnValue('foo');
+        uiUtils.askYesOrNoQuestion.and.returnValue(Promise.resolve());
+
+        let ciChecksCmdRe = /"[^"]*node[^"]*"\s+"[^"]*node_modules.+grunt.+bin.+grunt"\s+ci-checks/;
 
         doWork().
           then(() => {
             expect(console.log).toHaveBeenCalled();
-            expect(utils.getRunWithNodeCmd).toHaveBeenCalledWith('grunt', ['ci-checks']);
-            expect(utils.spawnAsPromised).toHaveBeenCalledWith('foo');
+            expect(utils.spawnAsPromised).toHaveBeenCalled();
+            expect(utils.spawnAsPromised.calls.argsFor(0)[0]).toMatch(ciChecksCmdRe);
           }).
           then(done);
       });
@@ -483,33 +518,33 @@ describe('Merger', () => {
       let promise;
 
       beforeEach(() => {
-        spyOn(gUtils, 'push').and.returnValue(Promise.resolve());
-        spyOn(utils, 'askYesOrNoQuestion');
+        spyOn(gitUtils, 'push').and.returnValue(Promise.resolve());
+        spyOn(uiUtils, 'askYesOrNoQuestion');
 
         promise = merger.phase6();
       });
 
-      it('should call `utils.phase()` (and return the returned value)', () => {
+      it('should call `uiUtils.phase()` (and return the returned value)', () => {
         let phase = jasmine.objectContaining({id: '6'});
 
-        expect(utils.phase).toHaveBeenCalledWith(phase, jasmine.any(Function));
+        expect(uiUtils.phase).toHaveBeenCalledWith(phase, jasmine.any(Function));
         expect(promise).toBe(returnedPromise);
       });
 
       it('should ask confirmation before pushing to origin', done => {
-        utils.askYesOrNoQuestion.and.callFake(() => {
-          expect(gUtils.push).not.toHaveBeenCalled();
+        uiUtils.askYesOrNoQuestion.and.callFake(() => {
+          expect(gitUtils.push).not.toHaveBeenCalled();
 
           return Promise.reject();
         });
 
         doWork().
-          then(() => expect(utils.askYesOrNoQuestion).toHaveBeenCalled()).
+          then(() => expect(uiUtils.askYesOrNoQuestion).toHaveBeenCalled()).
           then(done);
       });
 
       it('should resolve the returned promise with `true` if the user confirms', done => {
-        utils.askYesOrNoQuestion.and.returnValue(Promise.resolve());
+        uiUtils.askYesOrNoQuestion.and.returnValue(Promise.resolve());
 
         doWork().
           then(value => expect(value).toBe(true)).
@@ -517,7 +552,7 @@ describe('Merger', () => {
       });
 
       it('should resolve the returned promise with `false` if the user does not confirm', done => {
-        utils.askYesOrNoQuestion.and.returnValue(Promise.reject());
+        uiUtils.askYesOrNoQuestion.and.returnValue(Promise.reject());
 
         doWork().
           then(value => expect(value).toBe(false)).
@@ -525,20 +560,22 @@ describe('Merger', () => {
       });
 
       it('should do nothing if the user does not confirm', done => {
-        utils.askYesOrNoQuestion.and.returnValue(Promise.reject());
+        uiUtils.askYesOrNoQuestion.and.returnValue(Promise.reject());
 
         doWork().
-          then(() => expect(gUtils.push).not.toHaveBeenCalled()).
+          then(() => expect(uiUtils.askYesOrNoQuestion).toHaveBeenCalled()).
+          then(() => expect(gitUtils.push).not.toHaveBeenCalled()).
           then(done);
       });
 
       it('should push to origin if the user confirms', done => {
         let branch = input.branch;
 
-        utils.askYesOrNoQuestion.and.returnValue(Promise.resolve());
+        uiUtils.askYesOrNoQuestion.and.returnValue(Promise.resolve());
 
         doWork().
-          then(() => expect(gUtils.push).toHaveBeenCalledWith(branch)).
+          then(() => expect(uiUtils.askYesOrNoQuestion).toHaveBeenCalled()).
+          then(() => expect(gitUtils.push).toHaveBeenCalledWith(branch)).
           then(done);
       });
     });
@@ -546,6 +583,6 @@ describe('Merger', () => {
 
   // Helpers
   function createMerger(input) {
-    return new Merger(cleanUper, utils, gUtils, input);
+    return new Merger(cleanUper, utils, uiUtils, gitUtils, input);
   }
 });

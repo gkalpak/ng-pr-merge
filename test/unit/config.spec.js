@@ -1,8 +1,13 @@
 'use strict';
 
+// Imports
+let ngMaintainUtils = require('@gkalpak/ng-maintain-utils');
+
+let ArgSpec = ngMaintainUtils.ArgSpec;
+let ConfigBase = ngMaintainUtils.Config;
+
 // Imports - Local
 let Config = require('../../lib/config');
-let Phase = require('../../lib/phase');
 
 // Tests
 describe('Config', () => {
@@ -10,6 +15,117 @@ describe('Config', () => {
 
   beforeEach(() => {
     config = new Config();
+  });
+
+  it('should extend `ngMaintainUtils.Config`', () => {
+    expect(config).toEqual(jasmine.any(Config));
+    expect(config).toEqual(jasmine.any(ConfigBase));
+  });
+
+  it('should be possible to create independent instances', () => {
+    let config2 = new Config();
+
+    expect(config).not.toBe(config2);
+    expect(config.messages).not.toBe(config2.messages);
+
+    config.messages.usage = 'foo';
+    config2.messages.usage = 'bar';
+
+    expect(config.messages.usage).toBe('foo');
+    expect(config2.messages.usage).toBe('bar');
+  });
+
+  describe('#argSpecs', () => {
+    let argSpecs;
+
+    beforeEach(() => {
+      argSpecs = config.argSpecs;
+    });
+
+    it('should be an array', () => {
+      expect(argSpecs).toBeDefined();
+      expect(argSpecs).toEqual(jasmine.any(Array));
+    });
+
+    it('should have a spec for `prNo` (ArgSpec.Unnamed)', () => {
+      let argSpec = findSpecFor('prNo');
+
+      expect(argSpec).toBeDefined();
+      expect(argSpec).toEqual(jasmine.any(ArgSpec.Unnamed));
+      expect(argSpec.index).toBe(0);
+      expect(argSpec.errorCode).toContain('missingPrNo');
+      expect(argSpec.defaultValue).toBeNull();
+    });
+
+    it('should have an appropriate validtor for `prNo`', () => {
+      let validator = findSpecFor('prNo').validator;
+
+      [undefined, null, false, 0, ''].forEach(prNo => {
+        expect(validator(prNo)).toBe(false);
+      });
+
+      [true, 1, ' ', [], {}, () => {}].forEach(prNo => {
+        expect(validator(prNo)).toBe(true);
+      });
+    });
+
+    it('should have a spec for `branch` (ArgSpec)', () => {
+      let argSpec = findSpecFor('branch');
+
+      expect(argSpec).toBeDefined();
+      expect(argSpec).toEqual(jasmine.any(ArgSpec));
+      expect(argSpec).not.toEqual(jasmine.any(ArgSpec.Unnamed));
+      expect(argSpec.errorCode).toBeFalsy();
+      expect(argSpec.defaultValue).toBe(config.defaults.branch);
+    });
+
+    it('should have an appropriate validtor for `branch`', () => {
+      let validator = findSpecFor('branch').validator;
+
+      [undefined, null, false, true, 0, 1, '', ' ', [], {}, () => {}].forEach(brach => {
+        expect(validator(brach)).toBe(true);
+      });
+    });
+
+    it('should have a spec for `repo` (ArgSpec)', () => {
+      let argSpec = findSpecFor('repo');
+
+      expect(argSpec).toBeDefined();
+      expect(argSpec).toEqual(jasmine.any(ArgSpec));
+      expect(argSpec).not.toEqual(jasmine.any(ArgSpec.Unnamed));
+      expect(argSpec.errorCode).toContain('invalidRepo');
+      expect(argSpec.defaultValue).toBe(config.defaults.repo);
+    });
+
+    it('should have an appropriate validtor for `repo`', () => {
+      let validator = findSpecFor('repo').validator;
+
+      [undefined, null, false, 0, ''].forEach(repo => {
+        expect(validator(repo)).toBe(true);
+      });
+
+      [true, 1, {}, () => {}].forEach(repo => {
+        expect(() => validator(repo)).toThrowError();
+      });
+
+      [
+        ' ', 'foo', 'foo\\bar',
+        '/', ' / ',
+        'foo/', 'foo/  ', '/bar', '  /bar',
+        'foo/bar/baz'
+      ].forEach(repo => {
+        expect(validator(repo)).toBe(false);
+      });
+
+      ['foo/bar', 'foo-bar/baz qux'].forEach(repo => {
+        expect(validator(repo)).toBe(true);
+      });
+    });
+
+    // Helpers
+    function findSpecFor(key) {
+      return argSpecs.filter(argSpec => argSpec.key === key)[0];
+    }
   });
 
   describe('#defaults', () => {
@@ -22,6 +138,11 @@ describe('Config', () => {
     it('should be an object', () => {
       expect(defaults).toBeDefined();
       expect(defaults).toEqual(jasmine.any(Object));
+    });
+
+    it('should have a `branch` property (string)', () => {
+      expect(defaults.branch).toBeDefined();
+      expect(defaults.branch).toEqual(jasmine.any(String));
     });
 
     it('should have a `repo` property (string)', () => {
@@ -39,9 +160,8 @@ describe('Config', () => {
       expect(tokens.length).toBe(2);
     });
 
-    it('should have a `branch` property (string)', () => {
-      expect(defaults.branch).toBeDefined();
-      expect(defaults.branch).toEqual(jasmine.any(String));
+    it('should not have a value for `prNo`', () => {
+      expect(defaults.prNo).toBeNull();
     });
   });
 
@@ -55,63 +175,6 @@ describe('Config', () => {
     it('should be an object', () => {
       expect(messages).toBeDefined();
       expect(messages).toEqual(jasmine.any(Object));
-    });
-
-    describe('#usage', () => {
-      let usage;
-
-      beforeEach(() => {
-        usage = messages.usage;
-      });
-
-      it('should be a string', () => {
-        expect(usage).toBeDefined();
-        expect(usage).toEqual(jasmine.any(String));
-      });
-
-      it('should mention the default values', () => {
-        expect(usage.indexOf(config.defaults.repo)).toBeGreaterThan(-1);
-        expect(usage.indexOf(config.defaults.branch)).toBeGreaterThan(-1);
-      });
-    });
-
-    describe('#offerToCleanUp', () => {
-      let offerToCleanUp;
-
-      beforeEach(() => {
-        offerToCleanUp = messages.offerToCleanUp;
-      });
-
-      it('should be a string', () => {
-        expect(offerToCleanUp).toBeDefined();
-        expect(offerToCleanUp).toEqual(jasmine.any(String));
-      });
-
-      it('should not promise too much', () => {
-        expect(offerToCleanUp.indexOf('try')).toBeGreaterThan(-1);
-      });
-    });
-
-    describe('#cleanUpPhase', () => {
-      let cleanUpPhase;
-
-      beforeEach(() => {
-        cleanUpPhase = messages.cleanUpPhase;
-      });
-
-      it('should be a `Phase` object', () => {
-        expect(cleanUpPhase).toBeDefined();
-        expect(cleanUpPhase).toEqual(jasmine.any(Phase));
-      });
-
-      it('should have a thought-provoking ID', () => {
-        expect(cleanUpPhase.id).toBe('X');
-      });
-
-      it('should have an error message', () => {
-        expect(cleanUpPhase.error).toBeDefined();
-        expect(cleanUpPhase.error).toEqual(jasmine.any(String));
-      });
     });
 
     describe('#errors', () => {
@@ -133,7 +196,7 @@ describe('Config', () => {
         });
       });
 
-      ['invalidRepo', 'missingPrNo', 'unexpected'].forEach(errorId => {
+      ['invalidRepo', 'missingPrNo'].forEach(errorId => {
         it(`should include an error message (string) for \`${errorId}\``, () => {
           let key = `${keyPrefix}${errorId}`;
 
@@ -142,16 +205,61 @@ describe('Config', () => {
         });
       });
     });
-  });
 
-  it('should be possible to create independent instances', () => {
-    let originalRepo = config.defaults.repo;
-    let config2 = new Config();
+    describe('#headerTmpl', () => {
+      let headerTmpl;
 
-    config.defaults.repo = 'foo';
+      beforeEach(() => {
+        headerTmpl = messages.headerTmpl;
+      });
 
-    expect(config).not.toBe(config2);
-    expect(config.defaults.repo).toBe('foo');
-    expect(config2.defaults.repo).toBe(originalRepo);
+      it('should be a string', () => {
+        expect(headerTmpl).toBeDefined();
+        expect(headerTmpl).toEqual(jasmine.any(String));
+      });
+
+      it('should include placeholders for `branch`, `prNo` and `repo`', () => {
+        expect(headerTmpl).toMatch(/{{\s*branch\s*}}/);
+        expect(headerTmpl).toMatch(/{{\s*prNo\s*}}/);
+        expect(headerTmpl).toMatch(/{{\s*repo\s*}}/);
+      });
+    });
+
+    describe('#instructionsHeaderTmpl', () => {
+      let instructionsHeaderTmpl;
+
+      beforeEach(() => {
+        instructionsHeaderTmpl = messages.instructionsHeaderTmpl;
+      });
+
+      it('should be a string', () => {
+        expect(instructionsHeaderTmpl).toBeDefined();
+        expect(instructionsHeaderTmpl).toEqual(jasmine.any(String));
+      });
+
+      it('should include placeholders for `branch`, `prNo` and `repo`', () => {
+        expect(instructionsHeaderTmpl).toMatch(/{{\s*branch\s*}}/);
+        expect(instructionsHeaderTmpl).toMatch(/{{\s*prNo\s*}}/);
+        expect(instructionsHeaderTmpl).toMatch(/{{\s*repo\s*}}/);
+      });
+    });
+
+    describe('#usage', () => {
+      let usage;
+
+      beforeEach(() => {
+        usage = messages.usage;
+      });
+
+      it('should be a string', () => {
+        expect(usage).toBeDefined();
+        expect(usage).toEqual(jasmine.any(String));
+      });
+
+      it('should mention the default values', () => {
+        expect(usage).toContain(config.defaults.repo);
+        expect(usage).toContain(config.defaults.branch);
+      });
+    });
   });
 });
