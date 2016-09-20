@@ -22,6 +22,9 @@ Tasks performed:
 Using in the command-line:
 
 ```shell
+# Show version info
+ng-pr-merge --version
+
 # Show usage instructions
 ng-pr-merge --usage
 
