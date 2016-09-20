@@ -36,6 +36,45 @@ describe('Cli', () => {
     });
   });
 
+  describe('#_displayInstructions()', () => {
+    beforeEach(() => {
+      spyOn(AbstractCli.prototype, '_displayInstructions');
+    });
+
+    it('should call its super-method', () => {
+      cli._displayInstructions([], {});
+
+      expect(AbstractCli.prototype._displayInstructions).toHaveBeenCalled();
+    });
+
+    it('should pass `phases` to its super-method', () => {
+      let phases = [];
+      cli._displayInstructions(phases, {});
+
+      expect(AbstractCli.prototype._displayInstructions.calls.argsFor(0)[0]).toBe(phases);
+    });
+
+    it('should pass an extended `input` object to its super-method', () => {
+      spyOn(Merger, 'getPrUrl').and.returnValue('baz');
+      spyOn(Merger, 'getTempBranch').and.returnValue('qux');
+
+      cli._displayInstructions([], {foo: 'bar'});
+
+      expect(AbstractCli.prototype._displayInstructions.calls.argsFor(0)[1]).toEqual({
+        foo: 'bar',
+        prUrl: 'baz',
+        tempBranch: 'qux'
+      });
+    });
+
+    it('should not modify the original `input` object', () => {
+      let input = {foo: 'bar'};
+      cli._displayInstructions([], input);
+
+      expect(input).toEqual({foo: 'bar'});
+    });
+  });
+
   describe('#getPhases()', () => {
     it('should call and return `Merger.getPhases()`', () => {
       spyOn(Merger, 'getPhases').and.returnValues('foo', 'bar');

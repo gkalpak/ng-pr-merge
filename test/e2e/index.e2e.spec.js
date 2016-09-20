@@ -97,6 +97,30 @@ describe('index', () => {
         }).
         then(done);
     });
+
+    it('should display the name of the (auto-generated) temporary branch', done => {
+      let tempBranch = Merger.getTempBranch(12345);
+
+      runWith(['12345', '--instructions']).
+        then(response => {
+          expect(response.code).toBe(0);
+          expect(response.stderr).toBe('');
+          expect(response.stdout).toContain(tempBranch);
+        }).
+        then(done);
+    });
+
+    it('should display the (auto-generated) URL for fetching the PR', done => {
+      let prUrl = Merger.getPrUrl(12345, 'foo/bar');
+
+      runWith(['12345', '--repo="foo/bar"', '--instructions']).
+        then(response => {
+          expect(response.code).toBe(0);
+          expect(response.stderr).toBe('');
+          expect(response.stdout).toContain(prUrl);
+        }).
+        then(done);
+    });
   });
 
   describe('--no-usage --no-instructions', () => {
