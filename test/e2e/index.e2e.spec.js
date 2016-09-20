@@ -18,6 +18,19 @@ describe('index', () => {
     config = new Config();
   });
 
+  describe('--version', () => {
+    it('should display the correct version info', done => {
+      runWith(['--version']).
+        then(response => {
+          expect(response.code).toBe(0);
+          expect(response.stderr).toBe('');
+          expect(response.stdout).toContain('@gkalpak/ng-pr-merge');
+          expect(response.stdout).toContain(config.versionInfo.version);
+        }).
+        then(done);
+    });
+  });
+
   describe('--usage', () => {
     it('should display the usage instructions', done => {
       runWith(['--usage']).
