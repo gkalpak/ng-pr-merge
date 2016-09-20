@@ -75,15 +75,19 @@ describe('Config', () => {
       expect(argSpec).toBeDefined();
       expect(argSpec).toEqual(jasmine.any(ArgSpec));
       expect(argSpec).not.toEqual(jasmine.any(ArgSpec.Unnamed));
-      expect(argSpec.errorCode).toBeFalsy();
+      expect(argSpec.errorCode).toContain('emptyBranch');
       expect(argSpec.defaultValue).toBe(config.defaults.branch);
     });
 
     it('should have an appropriate validator for `branch`', () => {
       let validator = findSpecFor('branch').validator;
 
-      [undefined, null, false, true, 0, 1, '', ' ', [], {}, () => {}].forEach(brach => {
-        expect(validator(brach)).toBe(true);
+      [undefined, null, false, 0, '', true, 1, [], {}, () => {}].forEach(branch => {
+        expect(validator(branch)).toBe(false);
+      });
+
+      [' ', 'foo'].forEach(branch => {
+        expect(validator(branch)).toBe(true);
       });
     });
 
@@ -192,7 +196,7 @@ describe('Config', () => {
         });
       });
 
-      ['invalidRepo', 'missingPrNo'].forEach(errorId => {
+      ['emptyBranch', 'invalidRepo', 'missingPrNo'].forEach(errorId => {
         it(`should include an error message (string) for \`${errorId}\``, () => {
           let key = `${keyPrefix}${errorId}`;
 

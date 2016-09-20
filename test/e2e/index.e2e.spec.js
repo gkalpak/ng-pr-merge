@@ -93,6 +93,21 @@ describe('index', () => {
         then(done);
     });
 
+    it('should error if the branch is invalid', done => {
+      let promises = ['--branch', '--branch='].map(branchArg => {
+        runWith(['12345', branchArg, '--instructions']).
+          then(response => {
+            expect(response.code).toBe(1);
+            expect(response.stdout).toBe('');
+            expect(response.stderr).toContain('ERROR: The target branch cannot be empty');
+          });
+      });
+
+      Promise.
+        all(promises).
+        then(done);
+    });
+
     it('should error if no PR is specified (and display the usage instructions)', done => {
       runWith(['--instructions']).
         then(response => {
@@ -146,6 +161,21 @@ describe('index', () => {
             expect(response.stderr).toContain('Make sure to include the username');
             expect(response.stderr).toContain(config.defaults.repo);
           }).
+          then(done);
+      });
+
+      it('should error if the branch is invalid', done => {
+        let promises = ['--branch', '--branch='].map(branchArg => {
+          return runWith(['12345', branchArg]).
+            then(response => {
+              expect(response.code).toBe(1);
+              expect(response.stdout).toBe('');
+              expect(response.stderr).toContain('ERROR: The target branch cannot be empty');
+            });
+        });
+
+        Promise.
+          all(promises).
           then(done);
       });
 
