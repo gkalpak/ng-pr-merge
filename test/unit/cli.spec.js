@@ -75,6 +75,44 @@ describe('Cli', () => {
     });
   });
 
+  describe('#_theEnd()', () => {
+    beforeEach(() => {
+      spyOn(AbstractCli.prototype, '_theEnd');
+    });
+
+    it('should call its super-method', () => {
+      cli._theEnd();
+
+      expect(AbstractCli.prototype._theEnd).toHaveBeenCalled();
+    });
+
+    it('should not display "manually push the changes" if changes have been pushed', () => {
+      cli._theEnd(true);
+
+      expect(console.log).not.toHaveBeenCalled();
+    });
+
+    it('should display "manually push the changes" if changes have not been pushed', () => {
+      cli._theEnd();
+      cli._theEnd(false);
+
+      expect(console.log).toHaveBeenCalledTimes(2);
+      expect(console.log.calls.argsFor(0)[0]).toContain('manually push the changes');
+      expect(console.log.calls.argsFor(1)[0]).toContain('manually push the changes');
+    });
+
+    it('should display "manually push the changes" AFTER calling its super-method', () => {
+      AbstractCli.prototype._theEnd.and.callFake(() => {
+        expect(console.log).not.toHaveBeenCalled();
+      });
+
+      cli._theEnd(false);
+
+      expect(AbstractCli.prototype._theEnd).toHaveBeenCalled();
+      expect(console.log).toHaveBeenCalled();
+    });
+  });
+
   describe('#getPhases()', () => {
     it('should call and return `Merger.getPhases()`', () => {
       spyOn(Merger, 'getPhases').and.returnValues('foo', 'bar');
@@ -126,25 +164,6 @@ describe('Cli', () => {
         });
 
       superDeferred.reject('bar');
-    });
-
-    it('should not display "manually push the changes" if changes have been pushed', done => {
-      cli.
-        run([]).
-        then(() => expect(console.log).not.toHaveBeenCalled()).
-        then(done);
-
-      superDeferred.resolve(true);
-    });
-
-    it('should display "manually push the changes" if changes have not been pushed', done => {
-      cli.
-        run([]).
-        then(() => expect(console.log).toHaveBeenCalled()).
-        then(() => expect(console.log.calls.argsFor(0)[0]).toContain('manually push the changes')).
-        then(done);
-
-      superDeferred.resolve(false);
     });
 
     describe('- Doing work', () => {

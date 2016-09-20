@@ -28,6 +28,12 @@ describe('index', () => {
         }).
         then(done);
     });
+
+    it('should not display "manually push the changes"', done => {
+      runWith(['--usage']).
+        then(response => expect(response.stdout).not.toContain('manually push the changes')).
+        then(done);
+    });
   });
 
   describe('--instructions', () => {
@@ -119,6 +125,12 @@ describe('index', () => {
           expect(response.stderr).toBe('');
           expect(response.stdout).toContain(prUrl);
         }).
+        then(done);
+    });
+
+    it('should not display "manually push the changes"', done => {
+      runWith(['12345', '--instructions']).
+        then(response => expect(response.stdout).not.toContain('manually push the changes')).
         then(done);
     });
   });
