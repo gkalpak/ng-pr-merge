@@ -225,8 +225,14 @@ describe('Cli', () => {
       it('should create a `Merger`', done => {
         cli.
           run([]).
-          then(() => expect(cli._merger).toEqual(jasmine.any(Merger))).
-          then(() => expect(cli._merger._input).toBe(input)).
+          then(() => {
+            expect(cli._merger).toEqual(jasmine.any(Merger));
+            expect(cli._merger._cleanUper).toBeDefined();
+            expect(cli._merger._utils).toBeDefined();
+            expect(cli._merger._uiUtils).toBeDefined();
+            expect(cli._merger._gitUtils).toBeDefined();
+            expect(cli._merger._input).toBe(input);
+          }).
           then(done);
       });
 
