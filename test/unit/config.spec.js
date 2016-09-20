@@ -57,7 +57,7 @@ describe('Config', () => {
       expect(argSpec.defaultValue).toBeNull();
     });
 
-    it('should have an appropriate validtor for `prNo`', () => {
+    it('should have an appropriate validator for `prNo`', () => {
       let validator = findSpecFor('prNo').validator;
 
       [undefined, null, false, 0, ''].forEach(prNo => {
@@ -79,7 +79,7 @@ describe('Config', () => {
       expect(argSpec.defaultValue).toBe(config.defaults.branch);
     });
 
-    it('should have an appropriate validtor for `branch`', () => {
+    it('should have an appropriate validator for `branch`', () => {
       let validator = findSpecFor('branch').validator;
 
       [undefined, null, false, true, 0, 1, '', ' ', [], {}, () => {}].forEach(brach => {
@@ -97,19 +97,15 @@ describe('Config', () => {
       expect(argSpec.defaultValue).toBe(config.defaults.repo);
     });
 
-    it('should have an appropriate validtor for `repo`', () => {
+    it('should have an appropriate validator for `repo`', () => {
       let validator = findSpecFor('repo').validator;
 
-      [undefined, null, false, 0, ''].forEach(repo => {
-        expect(validator(repo)).toBe(true);
-      });
-
-      [true, 1, {}, () => {}].forEach(repo => {
+      [undefined, null, false, 0, true, 1, {}, () => {}].forEach(repo => {
         expect(() => validator(repo)).toThrowError();
       });
 
       [
-        ' ', 'foo', 'foo\\bar',
+        '', ' ', 'foo', 'foo\\bar',
         '/', ' / ',
         'foo/', 'foo/  ', '/bar', '  /bar',
         'foo/bar/baz'
