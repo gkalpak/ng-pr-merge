@@ -154,16 +154,61 @@ describe('Cli', () => {
       superDeferred.resolve('foo');
     });
 
-    it('should reject the returned promise if the super-method rejects', done => {
-      cli.
-        run([]).
-        catch(error => {
-          expect(error).toBe('bar');
+    describe('- On error', () => {
+      let errorCb;
 
-          done();
-        });
+      beforeEach(() => {
+        errorCb = jasmine.createSpy('errorCb').and.returnValue(Promise.reject());
 
-      superDeferred.reject('bar');
+        spyOn(cli._uiUtils, 'reportAndRejectFnGen').and.returnValue(errorCb);
+      });
+
+      it('should reject the returned promise if the super-method rejects', done => {
+        cli.
+          run([]).
+          catch(done);
+
+        superDeferred.reject();
+      });
+
+      it('should not "reportAndReject" if the rejection is empty', done => {
+        cli.
+          run([]).
+          catch(() => {
+            expect(errorCb).not.toHaveBeenCalled();
+
+            done();
+          });
+
+        superDeferred.reject();
+      });
+
+      it('should "reportAndReject" if the rejection is non-empty', done => {
+        cli.
+          run([]).
+          catch(() => {
+            expect(cli._uiUtils.reportAndRejectFnGen).toHaveBeenCalledWith('ERROR_unexpected');
+            expect(errorCb).toHaveBeenCalledWith('for a reason');
+
+            done();
+          });
+
+        superDeferred.reject('for a reason');
+      });
+
+      it('should reject with the value returned by "reportAndReject"', done => {
+        errorCb.and.returnValue(Promise.reject('for no reason'));
+
+        cli.
+          run([]).
+          catch(error => {
+            expect(error).toBe('for no reason');
+
+            done();
+          });
+
+        superDeferred.reject('for a reason');
+      });
     });
 
     describe('- Doing work', () => {
