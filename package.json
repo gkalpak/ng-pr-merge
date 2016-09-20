@@ -30,7 +30,7 @@
     "url": "git+https://github.com/gkalpak/ng-pr-merge.git"
   },
   "dependencies": {
-    "@gkalpak/ng-cla-check": "0.0.15",
+    "@gkalpak/ng-cla-check": "0.0.17",
     "@gkalpak/ng-maintain-utils": "0.0.4",
     "chalk": "^1.1.3"
   },
