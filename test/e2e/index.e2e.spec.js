@@ -75,10 +75,22 @@ describe('index', () => {
         then(done);
     });
 
+    it('should error if the repo is invalid', done => {
+      runWith(['12345', '--repo=baz\\qux', '--instructions']).
+        then(response => {
+          expect(response.code).toBe(1);
+          expect(response.stdout).toBe('');
+          expect(response.stderr).toContain('ERROR: Invalid repo');
+          expect(response.stderr).toContain('Make sure to include the username');
+          expect(response.stderr).toContain(config.defaults.repo);
+        }).
+        then(done);
+    });
+
     it('should error if no PR is specified (and display the usage instructions)', done => {
       runWith(['--instructions']).
         then(response => {
-          expect(response.code).not.toBe(0);
+          expect(response.code).toBe(1);
           expect(response.stdout).toBe('');
           expect(response.stderr).toContain('ERROR: No PR specified');
           expect(response.stderr).toContain(config.messages.usage);
@@ -88,14 +100,41 @@ describe('index', () => {
   });
 
   describe('--no-usage --no-instructions', () => {
-    // Only run the tests if a GitHub access-token is available
-    if (!process.env.hasOwnProperty(ClaChecker.GH_TOKEN_VAR)) {
-      console.warn('\n  No GitHub access-token available. ' +
-                   'Skipping `index --no-usage --no-instructions` tests...\n');
-      return;
-    }
+    describe('- Incorrect usage', () => {
+      it('should error if the repo is invalid', done => {
+        runWith(['12345', '--repo=baz\\qux']).
+          then(response => {
+            expect(response.code).toBe(1);
+            expect(response.stdout).toBe('');
+            expect(response.stderr).toContain('ERROR: Invalid repo');
+            expect(response.stderr).toContain('Make sure to include the username');
+            expect(response.stderr).toContain(config.defaults.repo);
+          }).
+          then(done);
+      });
 
-    it('needs tests');
+      it('should error if no PR is specified (and display the usage instructions)', done => {
+        runWith([]).
+          then(response => {
+            expect(response.code).toBe(1);
+            expect(response.stdout).toBe('');
+            expect(response.stderr).toContain('ERROR: No PR specified');
+            expect(response.stderr).toContain(config.messages.usage);
+          }).
+          then(done);
+      });
+    });
+
+    describe('- Correct usage', () => {
+      // Only run the tests if a GitHub access-token is available
+      if (!process.env.hasOwnProperty(ClaChecker.GH_TOKEN_VAR)) {
+        console.warn('\n  No GitHub access-token available. ' +
+                     'Skipping `index --no-usage --no-instructions` tests...\n');
+        return;
+      }
+
+      it('needs tests (but adding them is too complicated and probably not going to happen)');
+    });
   });
 
   // Helpers
