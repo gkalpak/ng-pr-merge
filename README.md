@@ -6,16 +6,17 @@ _Use at your own risk!_
 
 ## Description
 
-A utility for rebase-merging (AngularJS-related) GitHub PRs.
+A utility for rebase-merging (AngularJS-related) GitHub PRs.  
 Tasks performed:
 
-1. Verify CLA signature.
-2. Fetch PR as local branch.
-3. Rebase and merge local branch into target branch (e.g. `master`).
-4. Add `Closes #<PR>` to the commit message.
-5. Display the resulting changes (via `git diff` and `git log`).
+1. Verify the CLA signature.
+2. Fetch the PR as local branch.
+3. Rebase and merge the local branch into the target branch (e.g. `master`).
+4. Add `Closes #<PR>` to the commit message (at the right place).
+5. Display the resulting changes for inspection (via `git diff` and `git log`).
 6. Run the CI-checks.
-7. Push to origin.
+7. Push the changes to origin.
+8. Clean everything up.
 
 ## Usage
 
