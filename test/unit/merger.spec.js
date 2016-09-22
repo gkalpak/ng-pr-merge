@@ -129,6 +129,96 @@ describe('Merger', () => {
     });
   });
 
+  describe('#_getNewMessage()', () => {
+    let merger;
+
+    beforeEach(() => {
+      merger = createMerger({repo: '', branch: 'baz-qux', prNo: 12345});
+    });
+
+    it('should append `Closes #<PRNO>` at the end of the message', () => {
+      let oldMessage = 'foo bar';
+      let newMessage = merger._getNewMessage(oldMessage);
+
+      expect(newMessage).toBe('foo bar\n\nCloses #12345');
+    });
+
+    it('should not append `Closes #<PRNO>` if an equivalent note is already present', () => {
+      let oldMessages = {
+        withNote: [
+          'close #12345',
+          '\nClOsEs #12345  ',
+          '\n  CLOSED #12345',
+          '\n  Fix #12345',
+          '\r\n\r\nFixes #12345 ',
+          'Fixed #12345.',
+          'Resolve #12345o',
+          'foo\n\nbar\n\nresolves #12345 Happy now?',
+          'REsoLVed #12345'
+        ],
+        withoutNote: [
+          'foo. Closes #12345',
+          'Encloses #12345',
+          'Opens #12345',
+          'Closes 12345',
+          'Closes #1234',
+          'Closes #123456'
+        ]
+      };
+      let newMessages = {
+        withNote: oldMessages.withNote.map(oldMessage => merger._getNewMessage(oldMessage)),
+        withoutNote: oldMessages.withoutNote.map(oldMessage => merger._getNewMessage(oldMessage))
+      };
+
+      newMessages.withNote.forEach(newMessage => {
+        expect(newMessage).not.toMatch(/\n\nCloses #12345$/);
+      });
+      newMessages.withoutNote.forEach(newMessage => {
+        expect(newMessage).toMatch(/\n\nCloses #12345$/);
+      });
+    });
+
+    it('should trim whitespace and normalize line-endings (always)', () => {
+      let oldMessages = [
+        ' \t\r\n foo \t\r\n bar \t\n baz \t\n ',
+        ' \t\r\n foo \t\r\n bar \t\n baz \t\n Closes #12345',
+      ];
+      let newMessages = oldMessages.map(oldMessage => merger._getNewMessage(oldMessage));
+
+      expect(newMessages).toEqual([
+        'foo \t\n bar \t\n baz\n\nCloses #12345',
+        'foo \t\n bar \t\n baz \t\n Closes #12345'
+      ]);
+    });
+
+    it('should insert `Closes #<PRNO>` above "BREAKING CHANGE:"', () => {
+      let oldMessages = [
+        'foo\nBREAKING CHANGE: It is broken.',
+        'bar\n  BREAKING CHANGE: It is broken.',
+        'baz\nBREAKING CHANGE:',
+        'qux\n\n\nBREAKING CHANGE:',
+
+        'foo\nIt is a BREAKING CHANGE: It is broken.',
+        'bar\nBreaking Change: It is broken.',
+        'baz\nPOSSIBLE BREAKING CHANGE: It might be broken.',
+        'qux\nBREAKING CHANGE'
+      ];
+      let newMessages = oldMessages.map(oldMessage => merger._getNewMessage(oldMessage));
+
+      expect(newMessages).toEqual([
+        'foo\n\nCloses #12345\nBREAKING CHANGE: It is broken.',
+        'bar\n\nCloses #12345\n  BREAKING CHANGE: It is broken.',
+        'baz\n\nCloses #12345\nBREAKING CHANGE:',
+        'qux\n\nCloses #12345\n\n\nBREAKING CHANGE:',
+
+        'foo\nIt is a BREAKING CHANGE: It is broken.\n\nCloses #12345',
+        'bar\nBreaking Change: It is broken.\n\nCloses #12345',
+        'baz\nPOSSIBLE BREAKING CHANGE: It might be broken.\n\nCloses #12345',
+        'qux\nBREAKING CHANGE\n\nCloses #12345'
+      ]);
+    });
+  });
+
   describe('#merge()', () => {
     let phaseNums = [1, 2, 3, 4, 5, 6];
     let merger;
@@ -353,7 +443,10 @@ describe('Merger', () => {
           let deleteTempBranchTask = merger._cleanUpTasks.deleteTempBranch;
           let hardResetTask = merger._cleanUpTasks.hardReset;
 
+          spyOn(merger, '_getNewMessage');
+
           gitUtils.countCommitsSince.and.returnValue(commitCount);
+          gitUtils.updateLastCommitMessage.and.callFake(getNewMessage => getNewMessage());
 
           doWork().
             then(() => {
@@ -377,6 +470,7 @@ describe('Merger', () => {
                 expect(cleanUper.unschedule.calls.argsFor(++u)[0]).toBe(abortRebaseTask);
               }
               expect(gitUtils.updateLastCommitMessage).toHaveBeenCalledWith(jasmine.any(Function));
+              expect(merger._getNewMessage).toHaveBeenCalled();
               expect(cleanUper.unschedule.calls.argsFor(++u)[0]).toBe(hardResetTask);
 
               expect(gitUtils.rebase.calls.count()).toBe(expectedRebaseCount);
