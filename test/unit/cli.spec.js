@@ -75,26 +75,26 @@ describe('Cli', () => {
     });
   });
 
-  describe('#_theEnd()', () => {
+  describe('#_theHappyEnd()', () => {
     beforeEach(() => {
-      spyOn(AbstractCli.prototype, '_theEnd');
+      spyOn(AbstractCli.prototype, '_theHappyEnd');
     });
 
     it('should call its super-method', () => {
-      cli._theEnd();
+      cli._theHappyEnd();
 
-      expect(AbstractCli.prototype._theEnd).toHaveBeenCalled();
+      expect(AbstractCli.prototype._theHappyEnd).toHaveBeenCalled();
     });
 
     it('should not display "manually push the changes" if changes have been pushed', () => {
-      cli._theEnd(true);
+      cli._theHappyEnd(true);
 
       expect(console.log).not.toHaveBeenCalled();
     });
 
     it('should display "manually push the changes" if changes have not been pushed', () => {
-      cli._theEnd();
-      cli._theEnd(false);
+      cli._theHappyEnd();
+      cli._theHappyEnd(false);
 
       expect(console.log).toHaveBeenCalledTimes(2);
       expect(console.log.calls.argsFor(0)[0]).toContain('manually push the changes');
@@ -102,13 +102,13 @@ describe('Cli', () => {
     });
 
     it('should display "manually push the changes" AFTER calling its super-method', () => {
-      AbstractCli.prototype._theEnd.and.callFake(() => {
+      AbstractCli.prototype._theHappyEnd.and.callFake(() => {
         expect(console.log).not.toHaveBeenCalled();
       });
 
-      cli._theEnd(false);
+      cli._theHappyEnd(false);
 
-      expect(AbstractCli.prototype._theEnd).toHaveBeenCalled();
+      expect(AbstractCli.prototype._theHappyEnd).toHaveBeenCalled();
       expect(console.log).toHaveBeenCalled();
     });
   });
@@ -154,61 +154,14 @@ describe('Cli', () => {
       superDeferred.resolve('foo');
     });
 
-    describe('- On error', () => {
-      let errorCb;
+    it('should reject the returned promise if the super-method rejects', done => {
+      spyOn(cli._uiUtils, 'reportAndRejectFnGen').and.returnValue(() => Promise.reject());
 
-      beforeEach(() => {
-        errorCb = jasmine.createSpy('errorCb').and.returnValue(Promise.reject());
+      cli.
+        run([]).
+        catch(done);
 
-        spyOn(cli._uiUtils, 'reportAndRejectFnGen').and.returnValue(errorCb);
-      });
-
-      it('should reject the returned promise if the super-method rejects', done => {
-        cli.
-          run([]).
-          catch(done);
-
-        superDeferred.reject();
-      });
-
-      it('should not "reportAndReject" if the rejection is empty', done => {
-        cli.
-          run([]).
-          catch(() => {
-            expect(errorCb).not.toHaveBeenCalled();
-
-            done();
-          });
-
-        superDeferred.reject();
-      });
-
-      it('should "reportAndReject" if the rejection is non-empty', done => {
-        cli.
-          run([]).
-          catch(() => {
-            expect(cli._uiUtils.reportAndRejectFnGen).toHaveBeenCalledWith('ERROR_unexpected');
-            expect(errorCb).toHaveBeenCalledWith('for a reason');
-
-            done();
-          });
-
-        superDeferred.reject('for a reason');
-      });
-
-      it('should reject with the value returned by "reportAndReject"', done => {
-        errorCb.and.returnValue(Promise.reject('for no reason'));
-
-        cli.
-          run([]).
-          catch(error => {
-            expect(error).toBe('for no reason');
-
-            done();
-          });
-
-        superDeferred.reject('for a reason');
-      });
+      superDeferred.reject();
     });
 
     describe('- Doing work', () => {

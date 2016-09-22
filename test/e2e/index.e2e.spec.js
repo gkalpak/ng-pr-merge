@@ -98,7 +98,7 @@ describe('index', () => {
       runWith(['12345', '--repo=baz\\qux', '--instructions']).
         then(response => {
           expect(response.code).toBe(1);
-          expect(response.stdout).toBe('');
+          expect(response.stdout.trim()).toBe('');
           expect(response.stderr).toContain('ERROR: Invalid repo');
           expect(response.stderr).toContain('Make sure to include the username');
           expect(response.stderr).toContain(config.defaults.repo);
@@ -111,7 +111,7 @@ describe('index', () => {
         runWith(['12345', branchArg, '--instructions']).
           then(response => {
             expect(response.code).toBe(1);
-            expect(response.stdout).toBe('');
+            expect(response.stdout.trim()).toBe('');
             expect(response.stderr).toContain('ERROR: The target branch cannot be empty');
           });
       });
@@ -125,7 +125,7 @@ describe('index', () => {
       runWith(['--instructions']).
         then(response => {
           expect(response.code).toBe(1);
-          expect(response.stdout).toBe('');
+          expect(response.stdout.trim()).toBe('');
           expect(response.stderr).toContain('ERROR: No PR specified');
           expect(response.stderr).toContain(config.messages.usage);
         }).
@@ -169,7 +169,7 @@ describe('index', () => {
         runWith(['12345', '--repo=baz\\qux']).
           then(response => {
             expect(response.code).toBe(1);
-            expect(response.stdout).toBe('');
+            expect(response.stdout.trim()).toBe('');
             expect(response.stderr).toContain('ERROR: Invalid repo');
             expect(response.stderr).toContain('Make sure to include the username');
             expect(response.stderr).toContain(config.defaults.repo);
@@ -182,7 +182,7 @@ describe('index', () => {
           return runWith(['12345', branchArg]).
             then(response => {
               expect(response.code).toBe(1);
-              expect(response.stdout).toBe('');
+              expect(response.stdout.trim()).toBe('');
               expect(response.stderr).toContain('ERROR: The target branch cannot be empty');
             });
         });
@@ -196,7 +196,7 @@ describe('index', () => {
         runWith([]).
           then(response => {
             expect(response.code).toBe(1);
-            expect(response.stdout).toBe('');
+            expect(response.stdout.trim()).toBe('');
             expect(response.stderr).toContain('ERROR: No PR specified');
             expect(response.stderr).toContain(config.messages.usage);
           }).
