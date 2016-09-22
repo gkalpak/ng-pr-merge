@@ -500,9 +500,11 @@ describe('Merger', () => {
       });
 
       it('should run the CI checks if the user confirms', done => {
+        spyOn(process, 'cwd').and.returnValue('foo/bar');
         uiUtils.askYesOrNoQuestion.and.returnValue(Promise.resolve());
 
-        let ciChecksCmdRe = /"[^"]*node[^"]*"\s+"[^"]*node_modules.+grunt.+bin.+grunt"\s+ci-checks/;
+        let ciChecksCmdRe =
+            /"[^"]*node[^"]*"\s+"[^"]*foo.+bar.+node_modules.+grunt.+bin.+grunt"\s+ci-checks/;
 
         doWork().
           then(() => {
