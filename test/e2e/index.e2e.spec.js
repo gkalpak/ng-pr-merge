@@ -206,7 +206,7 @@ describe('index', () => {
 
     describe('- Correct usage', () => {
       // Only run the tests if a GitHub access-token is available
-      if (!process.env.hasOwnProperty(ClaChecker.GH_TOKEN_VAR)) {
+      if (!process.env.hasOwnProperty(ClaChecker.getGhTokenVar())) {
         console.warn('\n  No GitHub access-token available. ' +
                      'Skipping `index --no-usage --no-instructions` tests...\n');
         return;
