@@ -28,7 +28,7 @@ describe('Merger', () => {
   });
 
   describe('Merger#getPhases()', () => {
-    let phaseIds = ['1', '2', '3', '4', '5', '6'];
+    let phaseIds = ['1', '2', '3', '4', '5', '6', '7'];
     let phaseIdsWithoutError = ['4'];
     let phases;
 
@@ -121,11 +121,66 @@ describe('Merger', () => {
       expect(merger._tempBranch).toBe('bar');
     });
 
-    it('should register clean-up tasks', () => {
-      spyOn(cleanUper, 'registerTask');
-      createMerger({});
+    describe('- Clean-up tasks', () => {
+      beforeEach(() => {
+        spyOn(cleanUper, 'registerTask').and.returnValue({});
+      });
 
-      expect(cleanUper.registerTask).toHaveBeenCalled();
+      it('should be registered', () => {
+        createMerger({});
+
+        expect(cleanUper.registerTask).toHaveBeenCalledTimes(5);
+      });
+
+      it('should include an `abortRebase` task', () => {
+        spyOn(gitUtils, 'abortRebase').and.returnValue(Promise.reject());
+
+        let merger = createMerger({});
+        cleanUper.registerTask.calls.argsFor(0)[1]();
+
+        expect(merger._cleanUpTasks.abortRebase).toBeDefined();
+        expect(gitUtils.abortRebase).toHaveBeenCalledWith();
+      });
+
+      it('should include an `cleanUntracked` task', () => {
+        spyOn(gitUtils, 'clean');
+
+        let merger = createMerger({});
+        cleanUper.registerTask.calls.argsFor(1)[1]();
+
+        expect(merger._cleanUpTasks.cleanUntracked).toBeDefined();
+        expect(gitUtils.clean).toHaveBeenCalledWith();
+      });
+
+      it('should include an `checkoutBranch` task', () => {
+        spyOn(gitUtils, 'checkout');
+
+        let merger = createMerger({branch: 'foo'});
+        cleanUper.registerTask.calls.argsFor(2)[1]();
+
+        expect(merger._cleanUpTasks.checkoutBranch).toBeDefined();
+        expect(gitUtils.checkout).toHaveBeenCalledWith('foo');
+      });
+
+      it('should include an `deleteTempBranch` task', () => {
+        spyOn(gitUtils, 'deleteBranch');
+
+        let merger = createMerger({});
+        cleanUper.registerTask.calls.argsFor(3)[1]();
+
+        expect(merger._cleanUpTasks.deleteTempBranch).toBeDefined();
+        expect(gitUtils.deleteBranch).toHaveBeenCalledWith(merger._tempBranch, true);
+      });
+
+      it('should include an `hardReset` task', () => {
+        spyOn(gitUtils, 'reset');
+
+        let merger = createMerger({branch: 'foo'});
+        cleanUper.registerTask.calls.argsFor(4)[1]();
+
+        expect(merger._cleanUpTasks.hardReset).toBeDefined();
+        expect(gitUtils.reset).toHaveBeenCalledWith('origin/foo', true);
+      });
     });
   });
 
@@ -272,7 +327,7 @@ describe('Merger', () => {
     });
   });
 
-  describe('phases', () => {
+  describe('- Phases:', () => {
     let input;
     let merger;
     let doWork;
@@ -370,31 +425,40 @@ describe('Merger', () => {
         let branch = input.branch;
         let tempBranch = merger._tempBranch;
         let checkoutBranchTask = merger._cleanUpTasks.checkoutBranch;
+        let cleanUntrackedTask = merger._cleanUpTasks.cleanUntracked;
         let deleteTempBranchTask = merger._cleanUpTasks.deleteTempBranch;
         let prUrl = Merger.getPrUrl(input.repo, input.prNo);
 
         doWork().
           then(() => {
             expect(gitUtils.checkout).toHaveBeenCalledWith(branch);
+            expect(cleanUper.schedule.calls.argsFor(0)[0]).toBe(cleanUntrackedTask);
             expect(gitUtils.pull).toHaveBeenCalledWith(branch, true);
             expect(gitUtils.createBranch).toHaveBeenCalledWith(tempBranch);
-            expect(cleanUper.schedule.calls.argsFor(0)[0]).toBe(deleteTempBranchTask);
-            expect(cleanUper.schedule.calls.argsFor(1)[0]).toBe(checkoutBranchTask);
+            expect(cleanUper.schedule.calls.argsFor(1)[0]).toBe(deleteTempBranchTask);
+            expect(cleanUper.schedule.calls.argsFor(2)[0]).toBe(checkoutBranchTask);
             expect(gitUtils.mergePullRequest).toHaveBeenCalledWith(prUrl);
           }).
           then(done);
       });
 
-      it('should schedule clean-up tasks before calling `gitUtils.mergePullRequest()`', done => {
+      it('should schedule clean-up tasks at appropriate times', done => {
         let checkoutBranchTask = merger._cleanUpTasks.checkoutBranch;
+        let cleanUntrackedTask = merger._cleanUpTasks.cleanUntracked;
         let deleteTempBranchTask = merger._cleanUpTasks.deleteTempBranch;
 
         gitUtils.mergePullRequest.and.callFake(() => {
-          expect(cleanUper.schedule.calls.argsFor(0)[0]).toBe(deleteTempBranchTask);
-          expect(cleanUper.schedule.calls.argsFor(1)[0]).toBe(checkoutBranchTask);
+          expect(gitUtils.pull).toHaveBeenCalled();
+
+          expect(cleanUper.schedule.calls.argsFor(1)[0]).toBe(deleteTempBranchTask);
+          expect(cleanUper.schedule.calls.argsFor(2)[0]).toBe(checkoutBranchTask);
           expect(cleanUper.unschedule).not.toHaveBeenCalled();
 
           done();
+        });
+        gitUtils.pull.and.callFake(() => {
+          expect(cleanUper.schedule.calls.argsFor(0)[0]).toBe(cleanUntrackedTask);
+          expect(cleanUper.unschedule).not.toHaveBeenCalled();
         });
 
         expect(cleanUper.schedule).not.toHaveBeenCalledWith();
@@ -550,14 +614,45 @@ describe('Merger', () => {
 
       beforeEach(() => {
         spyOn(console, 'log');
-        spyOn(uiUtils, 'askYesOrNoQuestion');
-        spyOn(utils, 'spawnAsPromised');
+        spyOn(cleanUper, 'unschedule');
+        spyOn(gitUtils, 'clean');
 
         promise = merger.phase5();
       });
 
       it('should call `uiUtils.phase()` (and return the returned value)', () => {
         let phase = jasmine.objectContaining({id: '5'});
+
+        expect(uiUtils.phase).toHaveBeenCalledWith(phase, jasmine.any(Function));
+        expect(promise).toBe(returnedPromise);
+      });
+
+      it('should do stuff', done => {
+        let cleanUntrackedTask = merger._cleanUpTasks.cleanUntracked;
+
+        doWork().
+          then(() => {
+            expect(gitUtils.clean).toHaveBeenCalledWith();
+            expect(cleanUper.unschedule).toHaveBeenCalled();
+            expect(cleanUper.unschedule.calls.argsFor(0)[0]).toBe(cleanUntrackedTask);
+          }).
+          then(done);
+      });
+    });
+
+    describe('#phase6()', () => {
+      let promise;
+
+      beforeEach(() => {
+        spyOn(console, 'log');
+        spyOn(uiUtils, 'askYesOrNoQuestion');
+        spyOn(utils, 'spawnAsPromised');
+
+        promise = merger.phase6();
+      });
+
+      it('should call `uiUtils.phase()` (and return the returned value)', () => {
+        let phase = jasmine.objectContaining({id: '6'});
 
         expect(uiUtils.phase).toHaveBeenCalledWith(phase, jasmine.any(Function));
         expect(promise).toBe(returnedPromise);
@@ -610,18 +705,18 @@ describe('Merger', () => {
       });
     });
 
-    describe('#phase6()', () => {
+    describe('#phase7()', () => {
       let promise;
 
       beforeEach(() => {
         spyOn(gitUtils, 'push').and.returnValue(Promise.resolve());
         spyOn(uiUtils, 'askYesOrNoQuestion');
 
-        promise = merger.phase6();
+        promise = merger.phase7();
       });
 
       it('should call `uiUtils.phase()` (and return the returned value)', () => {
-        let phase = jasmine.objectContaining({id: '6'});
+        let phase = jasmine.objectContaining({id: '7'});
 
         expect(uiUtils.phase).toHaveBeenCalledWith(phase, jasmine.any(Function));
         expect(promise).toBe(returnedPromise);
