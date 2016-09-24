@@ -15,6 +15,8 @@ let Merger = require('../../lib/merger');
 
 // Tests
 describe('Merger', () => {
+  let phaseIds = ['1', '2', '3', '4', '5', '6', '7'];
+  let phaseIdsWithoutError = ['4'];
   let cleanUper;
   let gitUtils;
   let uiUtils;
@@ -28,8 +30,6 @@ describe('Merger', () => {
   });
 
   describe('Merger#getPhases()', () => {
-    let phaseIds = ['1', '2', '3', '4', '5', '6', '7'];
-    let phaseIdsWithoutError = ['4'];
     let phases;
 
     beforeEach(() => {
@@ -275,14 +275,13 @@ describe('Merger', () => {
   });
 
   describe('#merge()', () => {
-    let phaseNums = [1, 2, 3, 4, 5, 6];
     let merger;
 
     beforeEach(() => {
       merger = createMerger({repo: 'foo/bar', branch: 'baz-qux', prNo: 12345});
 
-      phaseNums.forEach(num => {
-        let methodName = `phase${num}`;
+      phaseIds.forEach(id => {
+        let methodName = `phase${id}`;
         spyOn(merger, methodName).and.returnValue(Promise.resolve(methodName));
       });
     });
@@ -294,36 +293,41 @@ describe('Merger', () => {
     });
 
     it('should run all phases (and resolve the returned promise)', done => {
-      let lastNum = phaseNums[phaseNums.length - 1];
+      let lastId = phaseIds[phaseIds.length - 1];
 
       merger.merge().
         then(value => {
-          expect(value).toBe(`phase${lastNum}`);
-          phaseNums.forEach(num => {
-            expect(merger[`phase${num}`]).toHaveBeenCalled();
+          expect(value).toBe(`phase${lastId}`);
+          phaseIds.forEach(id => {
+            expect(merger[`phase${id}`]).toHaveBeenCalled();
           });
         }).
         then(done);
     });
 
     it('should abort (and reject the returned promise) if any phase errors', done => {
-      let errorNum = 4;
-      merger[`phase${errorNum}`].and.returnValue(Promise.reject('Test'));
+      let errorId = '4';
+      let errorIdIdx = phaseIds.indexOf(errorId);
+
+      merger[`phase${errorId}`].and.returnValue(Promise.reject('Test'));
 
       merger.merge().
         catch(err => {
           expect(err).toBe('Test');
-          phaseNums.forEach(num => {
-            let method = merger[`phase${num}`];
 
-            if (num > errorNum) {
+          phaseIds.forEach((id, idx) => {
+            let method = merger[`phase${id}`];
+
+
+            if (idx > errorIdIdx) {
               expect(method).not.toHaveBeenCalled();
             } else {
               expect(method).toHaveBeenCalled();
             }
           });
-        }).
-        then(done);
+
+          done();
+        });
     });
   });
 
