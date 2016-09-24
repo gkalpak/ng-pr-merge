@@ -520,7 +520,7 @@ describe('Merger', () => {
       beforeEach(() => {
         spyOn(console, 'log');
         spyOn(utils, 'waitAsPromised');
-        spyOn(gitUtils, 'diff');
+        spyOn(gitUtils, 'diffWithHighlight');
         spyOn(gitUtils, 'log');
 
         promise = merger.phase4();
@@ -538,7 +538,7 @@ describe('Merger', () => {
 
         doWork().
           then(() => {
-            expect(gitUtils.diff).toHaveBeenCalledWith(`origin/${branch}`);
+            expect(gitUtils.diffWithHighlight).toHaveBeenCalledWith(`origin/${branch}`);
             expect(gitUtils.log).toHaveBeenCalledWith();
           }).
           then(done);

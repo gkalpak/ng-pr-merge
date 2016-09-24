@@ -13,10 +13,11 @@ Tasks performed:
 2. Fetch the PR as local branch.
 3. Rebase and merge the local branch into the target branch (e.g. `master`).
 4. Add `Closes #<PR>` to the commit message (at the right place).
-5. Display the resulting changes for inspection (via `git diff` and `git log`).
+5. Display the resulting changes for inspection (via `git diff` and `git log`).  
+   _(Experimental feature: Enhanced diff highlighting.)_
 6. Run the CI-checks.
 7. Push the changes to origin.
-8. Clean everything up.
+8. Clean everything up (e.g. if something goes wrong).
 
 ## Usage
 
