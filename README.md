@@ -15,7 +15,7 @@ Tasks performed:
 4. Add `Closes #<PR>` to the commit message (at the right place).
 5. Display the resulting changes for inspection (via `git diff` and `git log`).  
    _(Experimental feature: Enhanced diff highlighting.)_
-6. Interactively clean untracted files (e.g. auto-generated artifacts).
+6. Interactively clean untracked files (e.g. auto-generated artifacts).
 7. Run the CI-checks.
 8. Push the changes to origin.
 9. Clean everything up (e.g. if something goes wrong).
