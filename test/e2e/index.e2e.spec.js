@@ -27,7 +27,7 @@ describe('index', () => {
           expect(response.stdout).toContain('@gkalpak/ng-pr-merge');
           expect(response.stdout).toContain(config.versionInfo.version);
         }).
-        then(done);
+        then(done, done.fail);
     });
   });
 
@@ -39,13 +39,13 @@ describe('index', () => {
           expect(response.stderr).toBe('');
           expect(response.stdout).toContain(config.messages.usage);
         }).
-        then(done);
+        then(done, done.fail);
     });
 
     it('should not display "manually push the changes"', done => {
       runWith(['--usage']).
         then(response => expect(response.stdout).not.toContain('manually push the changes')).
-        then(done);
+        then(done, done.fail);
     });
   });
 
@@ -67,7 +67,7 @@ describe('index', () => {
             }
           });
         }).
-        then(done);
+        then(done, done.fail);
     });
 
     it('should fall back to the default `repo`/`branch` (if none specified)', done => {
@@ -78,7 +78,7 @@ describe('index', () => {
           expect(response.stdout).toContain(config.defaults.branch);
           expect(response.stdout).toContain(config.defaults.repo);
         }).
-        then(done);
+        then(done, done.fail);
     });
 
     it('should display instructions specific to custom `repo`/`branch` (if specified)', done => {
@@ -91,7 +91,7 @@ describe('index', () => {
           expect(response.stdout).toContain('foo-bar');
           expect(response.stdout).toContain('baz/qux');
         }).
-        then(done);
+        then(done, done.fail);
     });
 
     it('should error if the repo is invalid', done => {
@@ -103,12 +103,13 @@ describe('index', () => {
           expect(response.stderr).toContain('Make sure to include the username');
           expect(response.stderr).toContain(config.defaults.repo);
         }).
-        then(done);
+        then(done, done.fail);
     });
 
     it('should error if the branch is invalid', done => {
       let promises = ['--branch', '--branch='].map(branchArg => {
-        runWith(['12345', branchArg, '--instructions']).
+        // eslint-disable-next-line jasmine/no-promise-without-done-fail
+        return runWith(['12345', branchArg, '--instructions']).
           then(response => {
             expect(response.code).toBe(1);
             expect(trim(response.stdout)).toBe('');
@@ -118,7 +119,7 @@ describe('index', () => {
 
       Promise.
         all(promises).
-        then(done);
+        then(done, done.fail);
     });
 
     it('should error if no PR is specified (and display the usage instructions)', done => {
@@ -129,7 +130,7 @@ describe('index', () => {
           expect(response.stderr).toContain('ERROR: No PR specified');
           expect(response.stderr).toContain(config.messages.usage);
         }).
-        then(done);
+        then(done, done.fail);
     });
 
     it('should display the name of the (auto-generated) temporary branch', done => {
@@ -141,7 +142,7 @@ describe('index', () => {
           expect(response.stderr).toBe('');
           expect(response.stdout).toContain(tempBranch);
         }).
-        then(done);
+        then(done, done.fail);
     });
 
     it('should display the (auto-generated) URL for fetching the PR', done => {
@@ -153,13 +154,13 @@ describe('index', () => {
           expect(response.stderr).toBe('');
           expect(response.stdout).toContain(prUrl);
         }).
-        then(done);
+        then(done, done.fail);
     });
 
     it('should not display "manually push the changes"', done => {
       runWith(['12345', '--instructions']).
         then(response => expect(response.stdout).not.toContain('manually push the changes')).
-        then(done);
+        then(done, done.fail);
     });
   });
 
@@ -174,11 +175,12 @@ describe('index', () => {
             expect(response.stderr).toContain('Make sure to include the username');
             expect(response.stderr).toContain(config.defaults.repo);
           }).
-          then(done);
+          then(done, done.fail);
       });
 
       it('should error if the branch is invalid', done => {
         let promises = ['--branch', '--branch='].map(branchArg => {
+          // eslint-disable-next-line jasmine/no-promise-without-done-fail
           return runWith(['12345', branchArg]).
             then(response => {
               expect(response.code).toBe(1);
@@ -189,7 +191,7 @@ describe('index', () => {
 
         Promise.
           all(promises).
-          then(done);
+          then(done, done.fail);
       });
 
       it('should error if no PR is specified (and display the usage instructions)', done => {
@@ -200,7 +202,7 @@ describe('index', () => {
             expect(response.stderr).toContain('ERROR: No PR specified');
             expect(response.stderr).toContain(config.messages.usage);
           }).
-          then(done);
+          then(done, done.fail);
       });
     });
 
@@ -232,6 +234,7 @@ describe('index', () => {
   }
 
   function trim(str) {
+    // eslint-disable-next-line no-control-regex
     return str.replace(/\u001b\[0m$/, '').trim();
   }
 });

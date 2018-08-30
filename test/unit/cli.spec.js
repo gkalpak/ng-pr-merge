@@ -149,7 +149,7 @@ describe('Cli', () => {
       cli.
         run([]).
         then(value => expect(value).toBe('foo')).
-        then(done);
+        then(done, done.fail);
 
       superDeferred.resolve('foo');
     });
@@ -186,7 +186,7 @@ describe('Cli', () => {
             expect(cli._merger._gitUtils).toBeDefined();
             expect(cli._merger._input).toBe(input);
           }).
-          then(done);
+          then(done, done.fail);
       });
 
       it('should call `merge()` and return the returned value', done => {
@@ -194,7 +194,7 @@ describe('Cli', () => {
           run([]).
           then(value => expect(value).toBe('foo')).
           then(() => expect(mergeSpy).toHaveBeenCalled()).
-          then(done);
+          then(done, done.fail);
       });
     });
   });

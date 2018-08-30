@@ -287,7 +287,7 @@ describe('Merger', () => {
     });
 
     it('should return a promise', done => {
-      let promise = merger.merge().then(done);
+      let promise = merger.merge().then(done, done.fail);
 
       expect(promise).toEqual(jasmine.any(Promise));
     });
@@ -302,7 +302,7 @@ describe('Merger', () => {
             expect(merger[`phase${id}`]).toHaveBeenCalled();
           });
         }).
-        then(done);
+        then(done, done.fail);
     });
 
     it('should abort (and reject the returned promise) if any phase errors', done => {
@@ -390,7 +390,7 @@ describe('Merger', () => {
         merger.phase1();
         doWork().
           then(() => expect(uiUtils.askYesOrNoQuestion).toHaveBeenCalled()).
-          then(done);
+          then(done, done.fail);
       });
 
       it('should reject the returned promise if the user does not confirm', done => {
@@ -443,7 +443,7 @@ describe('Merger', () => {
             expect(cleanUper.schedule.calls.argsFor(2)[0]).toBe(checkoutBranchTask);
             expect(gitUtils.mergePullRequest).toHaveBeenCalledWith(prUrl);
           }).
-          then(done);
+          then(done, done.fail);
       });
 
       it('should schedule clean-up tasks at appropriate times', done => {
@@ -476,7 +476,7 @@ describe('Merger', () => {
             expect(cleanUper.schedule).toHaveBeenCalled();
             expect(cleanUper.unschedule).not.toHaveBeenCalled();
           }).
-          then(done);
+          then(done, done.fail);
       });
     });
 
@@ -543,7 +543,7 @@ describe('Merger', () => {
 
               expect(gitUtils.rebase.calls.count()).toBe(expectedRebaseCount);
             }).
-            then(done);
+            then(done, done.fail);
         });
       });
 
@@ -561,7 +561,7 @@ describe('Merger', () => {
 
         doWork().
           then(() => expect(gitUtils.rebase).toHaveBeenCalled()).
-          then(done);
+          then(done, done.fail);
       });
 
       it('should wrap certain operations in a `hardReset` clean-up task', done => {
@@ -578,7 +578,7 @@ describe('Merger', () => {
         doWork().
           then(() => expect(gitUtils.deleteBranch).toHaveBeenCalled()).
           then(() => expect(cleanUper.unschedule.calls.mostRecent().args[0]).toBe(hardResetTask)).
-          then(done);
+          then(done, done.fail);
       });
     });
 
@@ -609,7 +609,7 @@ describe('Merger', () => {
             expect(gitUtils.diffWithHighlight).toHaveBeenCalledWith(`origin/${branch}`);
             expect(gitUtils.log).toHaveBeenCalledWith();
           }).
-          then(done);
+          then(done, done.fail);
       });
     });
 
@@ -640,7 +640,7 @@ describe('Merger', () => {
             expect(cleanUper.unschedule).toHaveBeenCalled();
             expect(cleanUper.unschedule.calls.argsFor(0)[0]).toBe(cleanUntrackedTask);
           }).
-          then(done);
+          then(done, done.fail);
       });
     });
 
@@ -672,13 +672,13 @@ describe('Merger', () => {
 
         doWork().
           then(() => expect(uiUtils.askYesOrNoQuestion).toHaveBeenCalled()).
-          then(done);
+          then(done, done.fail);
       });
 
       it('should resolve the returned promise even if the user does not confirm', done => {
         uiUtils.askYesOrNoQuestion.and.returnValue(Promise.reject());
 
-        doWork().then(done);
+        doWork().then(done, done.fail);
       });
 
       it('should do nothing if the user does not confirm', done => {
@@ -689,7 +689,7 @@ describe('Merger', () => {
             expect(console.log).not.toHaveBeenCalled();
             expect(utils.spawnAsPromised).not.toHaveBeenCalled();
           }).
-          then(done);
+          then(done, done.fail);
       });
 
       it('should run the CI checks if the user confirms', done => {
@@ -705,7 +705,7 @@ describe('Merger', () => {
             expect(utils.spawnAsPromised).toHaveBeenCalled();
             expect(utils.spawnAsPromised.calls.argsFor(0)[0]).toMatch(ciChecksCmdRe);
           }).
-          then(done);
+          then(done, done.fail);
       });
     });
 
@@ -735,7 +735,7 @@ describe('Merger', () => {
 
         doWork().
           then(() => expect(uiUtils.askYesOrNoQuestion).toHaveBeenCalled()).
-          then(done);
+          then(done, done.fail);
       });
 
       it('should resolve the returned promise with `true` if the user confirms', done => {
@@ -743,7 +743,7 @@ describe('Merger', () => {
 
         doWork().
           then(value => expect(value).toBe(true)).
-          then(done);
+          then(done, done.fail);
       });
 
       it('should resolve the returned promise with `false` if the user does not confirm', done => {
@@ -751,7 +751,7 @@ describe('Merger', () => {
 
         doWork().
           then(value => expect(value).toBe(false)).
-          then(done);
+          then(done, done.fail);
       });
 
       it('should do nothing if the user does not confirm', done => {
@@ -760,7 +760,7 @@ describe('Merger', () => {
         doWork().
           then(() => expect(uiUtils.askYesOrNoQuestion).toHaveBeenCalled()).
           then(() => expect(gitUtils.push).not.toHaveBeenCalled()).
-          then(done);
+          then(done, done.fail);
       });
 
       it('should push to origin if the user confirms', done => {
@@ -771,7 +771,7 @@ describe('Merger', () => {
         doWork().
           then(() => expect(uiUtils.askYesOrNoQuestion).toHaveBeenCalled()).
           then(() => expect(gitUtils.push).toHaveBeenCalledWith(branch)).
-          then(done);
+          then(done, done.fail);
       });
     });
   });
