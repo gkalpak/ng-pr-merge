@@ -6,14 +6,14 @@ _Use at your own risk!_
 
 ## Description
 
-A utility for rebase-merging (AngularJS-related) GitHub PRs.  
+A utility for rebase-merging (AngularJS-related) GitHub PRs.
 Tasks performed:
 
 1. Verify the CLA signature.
 2. Fetch the PR as local branch.
 3. Rebase and merge the local branch into the target branch (e.g. `master`).
 4. Add `Closes #<PR>` to the commit message (at the right place).
-5. Display the resulting changes for inspection (via `git diff` and `git log`).  
+5. Display the resulting changes for inspection (via `git diff` and `git log`).
    _(Experimental feature: Enhanced diff highlighting.)_
 6. Interactively clean untracked files (e.g. auto-generated artifacts).
 7. Run the CI-checks.
@@ -55,21 +55,21 @@ ng-pr-merge 12345 [--branch="some-branch"] [--repo="some-user/some-repo"] --inst
 
 The following test-types/modes are available:
 
-- **Code-linting:** `npm run lint`  
+- **Code-linting:** `npm run lint`
   _Lint JavaScript files using ESLint._
 
-- **Unit tests:** `npm run test-unit`  
+- **Unit tests:** `npm run test-unit`
   _Run all the unit tests once. These tests are quick and suitable to be run on every change._
 
-- **E2E tests:** `npm run test-e2e`  
+- **E2E tests:** `npm run test-e2e`
   _Run all the end-to-end tests once. These test may hit actual API endpoints or perform expensive
   I/O operations and are considerably slower than unit tests._
 
-- **All tests:** `npm test` / `npm run test`  
+- **All tests:** `npm test` / `npm run test`
   _Run all of the above tests (code-linting, unit tests, e2e tests). This command is automatically
   run before `npm version` and `npm publish`._
 
-- **"Watch" mode:** `npm run test-watch`  
+- **"Watch" mode:** `npm run test-watch`
   _Watch all files and rerun the unit tests whenever something changes. For performance reasons,
   code-linting and e2e tests are omitted._
 
