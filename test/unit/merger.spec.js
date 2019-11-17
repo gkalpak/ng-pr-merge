@@ -6,6 +6,7 @@ let ngMaintainUtils = require('@gkalpak/ng-maintain-utils');
 
 let CleanUper = ngMaintainUtils.CleanUper;
 let GitUtils = ngMaintainUtils.GitUtils;
+let Logger = ngMaintainUtils.Logger;
 let Phase = ngMaintainUtils.Phase;
 let UiUtils = ngMaintainUtils.UiUtils;
 let Utils = ngMaintainUtils.Utils;
@@ -17,15 +18,17 @@ let Merger = require('../../lib/merger');
 describe('Merger', () => {
   let phaseIds = ['1', '2', '3', '4', '5', '6', '7'];
   let phaseIdsWithoutError = ['4'];
+  let logger;
   let cleanUper;
   let gitUtils;
   let uiUtils;
   let utils;
 
   beforeEach(() => {
-    cleanUper = new CleanUper();
+    logger = new Logger();
+    cleanUper = new CleanUper(logger);
     utils = new Utils();
-    uiUtils = new UiUtils(cleanUper, {});
+    uiUtils = new UiUtils(logger, cleanUper, {});
     gitUtils = new GitUtils(cleanUper, utils);
   });
 
@@ -90,16 +93,19 @@ describe('Merger', () => {
   });
 
   describe('#constructor()', () => {
-    it('should accept `cleanUper`, `utils`, `uiUtils`, `gitUtils` and `input` arguments', () => {
-      let input = {};
-      let merger = createMerger(input);
+    it('should accept `logger, `cleanUper`, `utils`, `uiUtils`, `gitUtils` and `input` arguments',
+      () => {
+        let input = {};
+        let merger = createMerger(input);
 
-      expect(merger._cleanUper).toBe(cleanUper);
-      expect(merger._utils).toBe(utils);
-      expect(merger._uiUtils).toBe(uiUtils);
-      expect(merger._gitUtils).toBe(gitUtils);
-      expect(merger._input).toBe(input);
-    });
+        expect(merger._logger).toBe(logger);
+        expect(merger._cleanUper).toBe(cleanUper);
+        expect(merger._utils).toBe(utils);
+        expect(merger._uiUtils).toBe(uiUtils);
+        expect(merger._gitUtils).toBe(gitUtils);
+        expect(merger._input).toBe(input);
+      }
+    );
 
     it('should create a `_claChecker` property (ClaChecker)', () => {
       let merger = createMerger({});
@@ -312,12 +318,11 @@ describe('Merger', () => {
       merger[`phase${errorId}`].and.returnValue(Promise.reject('Test'));
 
       merger.merge().
-        catch(err => {
+        then(done.fail, err => {
           expect(err).toBe('Test');
 
           phaseIds.forEach((id, idx) => {
             let method = merger[`phase${id}`];
-
 
             if (idx > errorIdIdx) {
               expect(method).not.toHaveBeenCalled();
@@ -586,7 +591,7 @@ describe('Merger', () => {
       let promise;
 
       beforeEach(() => {
-        spyOn(console, 'log');
+        spyOn(logger, 'log');
         spyOn(utils, 'waitAsPromised');
         spyOn(gitUtils, 'diffWithHighlight');
         spyOn(gitUtils, 'log');
@@ -617,7 +622,7 @@ describe('Merger', () => {
       let promise;
 
       beforeEach(() => {
-        spyOn(console, 'log');
+        spyOn(logger, 'log');
         spyOn(cleanUper, 'unschedule');
         spyOn(gitUtils, 'clean');
 
@@ -648,7 +653,7 @@ describe('Merger', () => {
       let promise;
 
       beforeEach(() => {
-        spyOn(console, 'log');
+        spyOn(logger, 'log');
         spyOn(uiUtils, 'askYesOrNoQuestion');
         spyOn(utils, 'spawnAsPromised');
 
@@ -664,7 +669,7 @@ describe('Merger', () => {
 
       it('should ask confirmation before running the CI checks', done => {
         uiUtils.askYesOrNoQuestion.and.callFake(() => {
-          expect(console.log).not.toHaveBeenCalled();
+          expect(logger.log).not.toHaveBeenCalled();
           expect(utils.spawnAsPromised).not.toHaveBeenCalled();
 
           return Promise.reject();
@@ -686,7 +691,7 @@ describe('Merger', () => {
 
         doWork().
           then(() => {
-            expect(console.log).not.toHaveBeenCalled();
+            expect(logger.log).not.toHaveBeenCalled();
             expect(utils.spawnAsPromised).not.toHaveBeenCalled();
           }).
           then(done, done.fail);
@@ -701,7 +706,7 @@ describe('Merger', () => {
 
         doWork().
           then(() => {
-            expect(console.log).toHaveBeenCalled();
+            expect(logger.log).toHaveBeenCalled();
             expect(utils.spawnAsPromised).toHaveBeenCalled();
             expect(utils.spawnAsPromised.calls.argsFor(0)[0]).toMatch(ciChecksCmdRe);
           }).
@@ -778,6 +783,6 @@ describe('Merger', () => {
 
   // Helpers
   function createMerger(input) {
-    return new Merger(cleanUper, utils, uiUtils, gitUtils, input);
+    return new Merger(logger, cleanUper, utils, uiUtils, gitUtils, input);
   }
 });

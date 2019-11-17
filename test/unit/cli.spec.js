@@ -5,6 +5,7 @@ let ngMaintainUtils = require('@gkalpak/ng-maintain-utils');
 
 let AbstractCli = ngMaintainUtils.AbstractCli;
 let GitUtils = ngMaintainUtils.GitUtils;
+let Logger = ngMaintainUtils.Logger;
 
 // Imports - Local
 let Cli = require('../../lib/cli');
@@ -14,11 +15,12 @@ let Merger = require('../../lib/merger');
 // Tests
 describe('Cli', () => {
   let cli;
+  let logSpy;
 
   beforeEach(() => {
     cli = new Cli();
 
-    spyOn(console, 'log');
+    logSpy = spyOn(Logger.prototype, 'log');
   });
 
   it('should extends `AbstractCli`', () => {
@@ -89,27 +91,23 @@ describe('Cli', () => {
     it('should not display "manually push the changes" if changes have been pushed', () => {
       cli._theHappyEnd(true);
 
-      expect(console.log).not.toHaveBeenCalled();
+      expect(logSpy).not.toHaveBeenCalled();
     });
 
     it('should display "manually push the changes" if changes have not been pushed', () => {
       cli._theHappyEnd();
       cli._theHappyEnd(false);
 
-      expect(console.log).toHaveBeenCalledTimes(2);
-      expect(console.log.calls.argsFor(0)[0]).toContain('manually push the changes');
-      expect(console.log.calls.argsFor(1)[0]).toContain('manually push the changes');
+      expect(logSpy).toHaveBeenCalledTimes(2);
+      expect(logSpy.calls.argsFor(0)[0]).toContain('manually push the changes');
+      expect(logSpy.calls.argsFor(1)[0]).toContain('manually push the changes');
     });
 
     it('should display "manually push the changes" AFTER calling its super-method', () => {
-      AbstractCli.prototype._theHappyEnd.and.callFake(() => {
-        expect(console.log).not.toHaveBeenCalled();
-      });
-
       cli._theHappyEnd(false);
 
-      expect(AbstractCli.prototype._theHappyEnd).toHaveBeenCalled();
-      expect(console.log).toHaveBeenCalled();
+      expect(AbstractCli.prototype._theHappyEnd).toHaveBeenCalledBefore(logSpy);
+      expect(logSpy).toHaveBeenCalled();
     });
   });
 
@@ -180,6 +178,7 @@ describe('Cli', () => {
           run([]).
           then(() => {
             expect(cli._merger).toEqual(jasmine.any(Merger));
+            expect(cli._merger._logger).toBeDefined();
             expect(cli._merger._cleanUper).toBeDefined();
             expect(cli._merger._utils).toBeDefined();
             expect(cli._merger._uiUtils).toBeDefined();
