@@ -1,6 +1,6 @@
 {
   "name": "@gkalpak/ng-pr-merge",
-  "version": "0.0.30",
+  "version": "0.0.31",
   "description": "A utility for rebase-merging (AngularJS-related) GitHub PRs.",
   "keywords": [
     "Utility",
