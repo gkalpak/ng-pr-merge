@@ -31,14 +31,14 @@
     "url": "git+https://github.com/gkalpak/ng-pr-merge.git"
   },
   "dependencies": {
-    "@gkalpak/ng-cla-check": "^0.2.1",
-    "@gkalpak/ng-maintain-utils": "^0.1.1",
-    "chalk": "^3.0.0"
+    "@gkalpak/ng-cla-check": "^0.2.2",
+    "@gkalpak/ng-maintain-utils": "^0.1.2",
+    "chalk": "^4.1.0"
   },
   "devDependencies": {
-    "@gkalpak/cli-utils": "^0.1.8",
-    "eslint": "^6.8.0",
-    "eslint-plugin-jasmine": "^4.1.0",
+    "@gkalpak/cli-utils": "^0.1.9",
+    "eslint": "^7.4.0",
+    "eslint-plugin-jasmine": "^4.1.1",
     "jasmine": "^3.5.0"
   }
 }
