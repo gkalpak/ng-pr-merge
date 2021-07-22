@@ -74,5 +74,5 @@ The following test-types/modes are available:
   code-linting and e2e tests are omitted._
 
 
-[build-status]: https://travis-ci.org/gkalpak/ng-pr-merge
-[build-status-image]: https://travis-ci.org/gkalpak/ng-pr-merge.svg?branch=master
+[build-status]: https://github.com/gkalpak/ng-pr-merge/actions/workflows/ci.yml
+[build-status-image]: https://github.com/gkalpak/ng-pr-merge/actions/workflows/ci.yml/badge.svg?branch=master&event=push
